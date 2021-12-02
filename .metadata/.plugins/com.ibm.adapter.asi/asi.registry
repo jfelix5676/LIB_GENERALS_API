@@ -1,0 +1,7 @@
+<ApplicationSpecificSchemaProperties
+  description="SAP ASI schema"
+  displayName="SAP Application Specific Information Schema"
+  namespaceURI="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/metadata"
+  xsdFileURL="file:/C:/Users/jfeli/IBM/IIBT10/workspace/SAPAdapter/build/classes/SapBusinessObjectMetadata.xsd"
+  linkage="1"
+/>

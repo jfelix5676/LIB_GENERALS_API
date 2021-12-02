@@ -1,0 +1,13 @@
+CREATE FUNCTION TransactionalResponse( IN Application CHARACTER, IN Path CHARACTER ) RETURNS BLOB
+BEGIN
+	DECLARE DataResult ROW;
+	DECLARE RESULT BLOB '';
+	
+	IF readEnvironment() = 'QAS' THEN
+		CALL readTransactionalResponse(Application, Path, DataResult.TransactionalResponse.Item[]) IN Database.{'broker'}.{'dbo'};
+		
+		SET RESULT = CAST(COALESCE(DataResult.TransactionalResponse.Item.Response, '') AS BLOB CCSID 1208 ENCODING 546  ) ;
+	END IF;
+	
+	RETURN RESULT;
+END;

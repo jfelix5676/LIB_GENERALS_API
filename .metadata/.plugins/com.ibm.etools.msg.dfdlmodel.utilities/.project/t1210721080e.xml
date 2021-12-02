@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><MessageBroker name="LAYOUT_JOB_SAP">
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapZfiS2credit2.xsd" prefix="sapzfis2credit2" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sapzfis2credit2">
+    <import name="SapPMovimientos1775016849.xsd" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappmovimientos1775016849"/>
+    <import name="SapPVales127518548.xsd" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappvales127518548"/>
+    <import name="SapPReturn1583706245.xsd" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappreturn1583706245"/>
+    <element href="platform:/resource/LAYOUT_JOB_SAP/SapZfiS2credit2.xsd#//SapZfiS2credit2;XSDElementDeclaration" name="SapZfiS2credit2" type="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sapzfis2credit2}SapZfiS2credit2"/>
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapZfiS2credit2.xsd#//SapZfiS2credit2;XSDComplexTypeDefinition" name="SapZfiS2credit2"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapPMovimientos1775016849.xsd" prefix="sappmovimientos" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappmovimientos1775016849">
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapPMovimientos1775016849.xsd#//SapPMovimientos;XSDComplexTypeDefinition" name="SapPMovimientos"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapPeTvarv1475538505.xsd" prefix="sappetvarv" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappetvarv1475538505">
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapPeTvarv1475538505.xsd#//SapPeTvarv;XSDComplexTypeDefinition" name="SapPeTvarv"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapZfmDptvarv.xsd" prefix="sapzfmdptvarv" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sapzfmdptvarv">
+    <import name="SapPiTvarv1878296358.xsd" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappitvarv1878296358"/>
+    <import name="SapPeTvarv1475538505.xsd" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappetvarv1475538505"/>
+    <element href="platform:/resource/LAYOUT_JOB_SAP/SapZfmDptvarv.xsd#//SapZfmDptvarv;XSDElementDeclaration" name="SapZfmDptvarv" type="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sapzfmdptvarv}SapZfmDptvarv"/>
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapZfmDptvarv.xsd#//SapZfmDptvarv;XSDComplexTypeDefinition" name="SapZfmDptvarv"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapPVales127518548.xsd" prefix="sappvales" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappvales127518548">
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapPVales127518548.xsd#//SapPVales;XSDComplexTypeDefinition" name="SapPVales"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapPReturn1583706245.xsd" prefix="sappreturn" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappreturn1583706245">
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapPReturn1583706245.xsd#//SapPReturn;XSDComplexTypeDefinition" name="SapPReturn"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/LAYOUT_JOB_SAP/SapPiTvarv1878296358.xsd" prefix="sappitvarv" targetNamespace="http://www.ibm.com/xmlns/prod/websphere/j2ca/sap/sappitvarv1878296358">
+    <complexType baseType="mlib://LAYOUT_JOB_SAP#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/LAYOUT_JOB_SAP/SapPiTvarv1878296358.xsd#//SapPiTvarv;XSDComplexTypeDefinition" name="SapPiTvarv"/>
+  </XSDCollection>
+</MessageBroker>

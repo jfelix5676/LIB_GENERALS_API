@@ -1,0 +1,88 @@
+CREATE COMPUTE MODULE SetFault
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN	
+		DECLARE DataResult ROW;
+		DECLARE ErrorNumber INTEGER 0;
+	    DECLARE ErrorText, ErrorDetail CHARACTER '';
+	    DECLARE ErrorBLOB BLOB;
+	   	
+	    CREATE LASTCHILD OF DataResult.XMLNSC DOMAIN('XMLNSC') TYPE Name Name 'ExceptionList'; 
+	    SET DataResult.XMLNSC.ExceptionList = InputExceptionList;
+	    
+		IF FIELDTYPE(InputExceptionList.[1]) IS NOT NULL THEN
+	        DECLARE Label CHARACTER;
+	        DECLARE I INTEGER 1;
+			DECLARE start REFERENCE TO InputExceptionList.*[1];
+			
+			WHILE start.Number IS NOT NULL DO
+				SET ErrorNumber = start.Number;
+				
+				IF ErrorNumber BETWEEN 1000 AND 1999 THEN
+					SET Label = 'Componentes de ejecución - Gestor de configuración';
+				ELSEIF ErrorNumber BETWEEN 2000 AND 2999 THEN
+					SET Label = 'Componentes de ejecución - Intermediario';
+				ELSEIF ErrorNumber BETWEEN 3000 AND 3999 THEN
+					SET Label = 'Componentes de ejecución - Nodos incorporados';
+				ELSEIF ErrorNumber BETWEEN 4000 AND 4999 THEN
+					SET Label = 'Componentes de ejecución - Nodos incorporados';
+				ELSEIF ErrorNumber BETWEEN 5000 AND 5999 THEN
+					SET Label = 'Componentes de ejecución - Analizadores';
+				ELSEIF ErrorNumber BETWEEN 6000 AND 6999 THEN
+					SET Label = 'Componentes de ejecución - Analizadores de WebSphere MQ y New Era';
+				ELSEIF ErrorNumber BETWEEN 7000 AND 7999 THEN
+					SET Label = 'Componentes de ejecución - Publicación Suscripción';
+				ELSEIF ErrorNumber BETWEEN 8000 AND 8999 THEN
+					SET Label = 'Componentes de ejecución - Mandatos';
+				ELSEIF ErrorNumber BETWEEN 9000 AND 9999 THEN
+					SET Label = 'Componentes de ejecución - z/OS y Derby';
+				ELSEIF ErrorNumber BETWEEN 11000 AND 11999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 12000 AND 12999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 13000 AND 13999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 15000 AND 15999 THEN
+					SET Label = 'Mandatos';
+				ELSE
+					SET Label = start.Label;
+				END IF;
+				
+				SET ErrorText = COALESCE('Error de ' || Label, '');
+				
+				IF ErrorNumber BETWEEN 2000 AND 3999 THEN
+		        	SET ErrorDetail = start.Insert[CARDINALITY(start.Insert[])].Text;
+		        ELSE
+		            SET ErrorDetail = start.Text;
+		        END IF;
+		        
+		        MOVE start LASTCHILD;
+			END WHILE;
+		ELSEIF EXISTS(InputLocalEnvironment.HTTP.Input.Timeout[]) THEN
+			
+			SET ErrorNumber = 3743;
+			SET ErrorText = 'Componentes de ejecución - Nodos incorporados';
+			SET ErrorDetail = 'El Tiempo Establecido Expiro';
+		END IF;
+		
+		-- ENVIRONMENT
+		IF EXISTS(Environment.REST.[]) = FALSE AND EXISTS(InputRoot.HTTPInputHeader.[]) = TRUE THEN			
+			CALL readParameters(DataResult, InputRoot, InputLocalEnvironment);
+			
+			CREATE LASTCHILD OF Environment TYPE Name NAME 'REST';
+			SET Environment.REST.Input = DataResult.REST.Input;			
+		END IF;
+		
+		-- HEADER
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader';
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8';
+		
+		-- BODY
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON';
+		SET OutputRoot.JSON.Data.ErrorMessage.Codigo = ErrorNumber;		
+		SET OutputRoot.JSON.Data.ErrorMessage.Titulo = ErrorText;
+		SET OutputRoot.JSON.Data.ErrorMessage.Mensaje = ErrorDetail;
+		SET OutputRoot.JSON.Data.ErrorMessage.Detalle = BASE64ENCODE(COALESCE(ASBITSTREAM(Environment.XMLNSC.ExceptionList OPTIONS FolderBitStream ENCODING 546 CCSID 1208), ASBITSTREAM(DataResult.XMLNSC.ExceptionList OPTIONS FolderBitStream ENCODING 546 CCSID 1208)));
+		
+		RETURN TRUE;
+	END;
+END MODULE;

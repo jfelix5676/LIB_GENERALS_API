@@ -1,0 +1,12 @@
+CREATE FUNCTION delimitedCharacter( IN string CHAR, IN length1 INT ) RETURNS CHARACTER
+BEGIN
+	DECLARE RESULT CHARACTER '';
+	
+	IF LENGTH( string ) > length1 THEN
+    	SET RESULT = SUBSTRING( string FROM 1 FOR (length1 - 1 ) );
+    ELSE
+    	SET RESULT = string;
+    END IF;
+	
+	RETURN RESULT;
+END;

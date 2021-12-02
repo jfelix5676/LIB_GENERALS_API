@@ -1,0 +1,25 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/ 
+	BEGIN		
+		-- VALIDATION 		
+		IF CARDINALITY(InputLocalEnvironment.Destination.InsertTransaction[]) > 0 THEN			
+			-- HEADER 
+			CREATE NEXTSIBLING OF OutputRoot.Properties DOMAIN ('MQMD') TYPE Name NAME 'MQMD';
+			SET OutputRoot.MQMD.Format = MQFMT_STRING;
+			SET OutputRoot.MQMD.CodedCharSetId = 1208;
+			SET OutputRoot.MQMD.Encoding = 546;
+			 
+			-- BODY 
+			CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON';
+			SET OutputRoot.JSON.Data = InputLocalEnvironment.Destination.InsertTransaction;
+			
+			PROPAGATE TO TERMINAL 1;
+		END IF;
+		
+		-- BODY 
+		SET OutputRoot = InputRoot;
+		
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		
+		RETURN TRUE; 
+	END; 

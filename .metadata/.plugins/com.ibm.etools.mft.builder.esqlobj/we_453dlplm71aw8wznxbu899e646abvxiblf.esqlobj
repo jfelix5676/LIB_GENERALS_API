@@ -1,0 +1,16 @@
+CREATE PROCEDURE containsCharsOnly ( IN string CHAR, IN chars CHAR ) RETURNS BOOLEAN
+BEGIN      
+	DECLARE length1 INT LENGTH( string );
+    DECLARE i INT 1;
+    WHILE i <= length1 DO         
+    	DECLARE char1 CHAR SUBSTRING( string FROM i FOR 1 );  
+    	       
+       	IF POSITION( char1 IN chars ) = 0 THEN          
+       		RETURN FALSE;            
+        END IF;   
+              
+        SET i = i + 1;
+        
+      END WHILE;      
+	RETURN TRUE;      
+END;

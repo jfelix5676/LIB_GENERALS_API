@@ -1,0 +1,4 @@
+CREATE FUNCTION readMessageFlowLabel ( ) RETURNS CHARACTER
+BEGIN
+	RETURN MessageFlowLabel;
+END;

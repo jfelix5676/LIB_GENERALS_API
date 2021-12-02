@@ -1,0 +1,4 @@
+CREATE FUNCTION readCache( IN cacheName CHARACTER, IN key CHARACTER )
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.esb.UtilitiesFactory.readCache";

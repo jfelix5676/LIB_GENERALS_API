@@ -1,0 +1,153 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/ 
+	BEGIN 
+		-- DECLARATION 
+		DECLARE BLUE_URL, BLUE_USER, BLUE_PASS, BLUE_METHOD, BLUE_AUTH, BLUE_TOKEN, USER_AUTH, TOKEN CHARACTER '';
+		DECLARE cardId,transactionDate, amount, totalAmount, ticketId, storeId, referenceId3, referenceId4, cashierCode, cashierName, supervisorCode, supervisorName, sellerCode, sellerName, localHour, products CHARACTER '';
+		
+		SET BLUE_URL = COALESCE( REPLACE(readConfigurationManagement('BLUE_URL'), ' ', ''), '');
+		SET BLUE_USER = COALESCE( REPLACE(readConfigurationManagement('BLUE_USER'), ' ', ''), '');
+		SET BLUE_PASS = COALESCE( REPLACE(readConfigurationManagement('BLUE_PASS'), ' ', ''), '');
+		SET BLUE_TOKEN = COALESCE( REPLACE(readConfigurationManagement('BLUE_TOKEN'), ' ', ''), '');
+		SET BLUE_AUTH = COALESCE( REPLACE(readConfigurationManagement('BLUE_AUTH'), ' ', ''), '');
+		SET BLUE_METHOD = COALESCE( REPLACE(Environment.Variables.Log.Method, ' ', ''), '');
+		
+		SET USER_AUTH = COALESCE( InputRoot.HTTPInputHeader."X-Auth-User", '');
+		SET TOKEN = COALESCE(InputRoot.HTTPInputHeader."X-Auth-Token", '');
+		
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET amount = COALESCE( InputRoot.JSON.Data.amount, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET referenceId3 = COALESCE( InputRoot.JSON.Data.referenceId3, '');
+		SET referenceId4 = COALESCE( InputRoot.JSON.Data.referenceId4, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cashierName = COALESCE( InputRoot.JSON.Data.cashierName, '');
+		SET supervisorCode = COALESCE( InputRoot.JSON.Data.supervisorCode, '');
+		SET supervisorName = COALESCE( InputRoot.JSON.Data.supervisorName, '');
+		SET sellerCode = COALESCE( InputRoot.JSON.Data.sellerCode, '');
+		SET sellerName = COALESCE( InputRoot.JSON.Data.sellerName, '');
+		SET localHour = COALESCE( InputRoot.JSON.Data.localHour, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		-- VALIDATION
+		IF BLUE_URL = '' OR BLUE_URL IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_URL'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_USER = '' OR BLUE_USER IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_USER'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_PASS = '' OR BLUE_PASS IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_PASS'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_TOKEN = '' OR BLUE_TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_TOKEN'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_AUTH = '' OR BLUE_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_AUTH'' Vacio', ''));
+		END IF;
+		
+		IF USER_AUTH = '' OR USER_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el USER_AUTH necesaria''.', ''));
+		END IF;
+		
+		IF TOKEN = '' OR TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el X-Auth-Token necesaria''.', ''));
+		END IF;
+		
+		IF CONTAINS(BLUE_AUTH, ',') THEN
+			DECLARE BLUE_AUTH_FOUND BOOLEAN FALSE;
+			DECLARE DataSet ROW;
+			
+			CALL Split(BLUE_AUTH, DataSet, ',');
+			
+			DECLARE UsersDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(UsersDS) = TRUE DO
+	
+				IF USER_AUTH = UsersDS THEN
+					SET BLUE_AUTH_FOUND = TRUE;
+				END IF;
+				
+				MOVE UsersDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			IF BLUE_AUTH_FOUND <> TRUE OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		ELSE
+			IF USER_AUTH <> BLUE_AUTH OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		END IF;
+		
+		IF CONTAINS(referenceId3, 'DPVL-') THEN
+			DECLARE BLUE_REFERENCE CHARACTER '';
+			DECLARE DataSet ROW;
+			
+			CALL Split(referenceId3, DataSet, '|');
+			
+			DECLARE ReferenceDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(ReferenceDS) = TRUE DO
+				
+				IF BLUE_REFERENCE = '' THEN
+					SET BLUE_REFERENCE = BLUE_REFERENCE || ReferenceDS;
+				ELSE
+					IF CONTAINS(ReferenceDS, 'DPVL-') THEN
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || 'DPVL¬DPVCode';
+					ELSE
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || ReferenceDS;
+					END IF;
+				END IF;
+								
+				MOVE ReferenceDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			SET referenceId3 = BLUE_REFERENCE;
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPRequestHeader';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'Content-Type' VALUE 'text/xml; charset=utf-8';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'SOAPAction' VALUE NS || 'Redeem'; 		
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC') TYPE Name NAME 'XMLNSC';
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:loginId = BLUE_USER;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:password = BLUE_PASS;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cardId = cardId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:transactionDate = transactionDate;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:amount = amount;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:totalamount = totalAmount;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:ticketid = ticketId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:storeid = storeId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:referenceId3 = referenceId3;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:referenceId4 = referenceId4;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cashierCode = cashierCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cashierName = cashierName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:supervisorCode = supervisorCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:supervisorName = supervisorName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:sellerCode = sellerCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:sellerName = sellerName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:localHour = localHour;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:Products = REPLACE(REPLACE(products, ',' ,'|'), '-', '|');
+		
+		-- LOCAL ENVIRONMENT 
+		CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.WebServiceURL = BLUE_URL;
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.Timeout = 360;
+		SET OutputLocalEnvironment.Destination.Data = InputRoot.JSON.Data;
+		SET OutputLocalEnvironment.Destination.RequestData = CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 
+		SET Environment.Variables.Log.Type = COALESCE('REST API', ''); 
+		SET Environment.Variables.Log.BackEnd = COALESCE('SOAP Services', ''); 
+		SET Environment.Variables.Log.BackEndTransaction = 'Request: ' || CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		RETURN TRUE; 
+	END; 

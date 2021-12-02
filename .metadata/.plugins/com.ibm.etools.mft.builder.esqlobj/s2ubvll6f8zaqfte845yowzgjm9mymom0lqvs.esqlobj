@@ -1,0 +1,15 @@
+CREATE FUNCTION IsResponse( IN Application CHARACTER, IN Path CHARACTER ) RETURNS BOOLEAN
+BEGIN
+	DECLARE DataResult ROW;
+	DECLARE RESULT BOOLEAN FALSE;
+	
+	IF readEnvironment() = 'QAS' THEN
+		CALL readTransactionalResponse(Application, Path, DataResult.TransactionalResponse.Item[]) IN Database.{'broker'}.{'dbo'};
+		
+		IF FIELDVALUE(DataResult.TransactionalResponse.Item.Response) <> '' OR FIELDVALUE(DataResult.TransactionalResponse.Item.Response) IS NOT NULL THEN	
+			SET RESULT = TRUE;
+		END IF;
+	END IF;
+	
+	RETURN RESULT;
+END;

@@ -1,0 +1,4 @@
+CREATE PROCEDURE readTransactionalResponse( IN Application CHARACTER, IN Path CHARACTER )
+LANGUAGE DATABASE
+DYNAMIC RESULT SETS 1
+EXTERNAL NAME "readTransactionalResponse";

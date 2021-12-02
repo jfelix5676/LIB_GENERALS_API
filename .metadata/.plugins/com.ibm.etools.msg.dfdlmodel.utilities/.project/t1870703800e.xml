@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><MessageBroker name="BLUE_API_S1">
+  <XSDCollection href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd" prefix="" targetNamespace="">
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd#//SOAP_Domain_Msg;XSDElementDeclaration" name="SOAP_Domain_Msg" type="mlib://BLUE_API_S1#/-/complexType{}SOAP_Msg_type"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd#//MIME_Headers_type;XSDComplexTypeDefinition" name="MIME_Headers_type"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd#//Attachment_type;XSDComplexTypeDefinition=1" name="Attachment_type"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd#//SOAP_Msg_type;XSDComplexTypeDefinition=2" name="SOAP_Msg_type"/>
+    <group href="platform:/resource/BLUE_API_S1/IBMdefined/soap.xsd#//MIME_header_fields;XSDModelGroupDefinition" name="MIME_header_fields"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd" prefix="tns" targetNamespace="http://schemas.xmlsoap.org/soap/envelope/">
+    <import name="IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd" targetNamespace="http://www.w3.org/XML/1998/namespace"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Envelope;XSDElementDeclaration" name="Envelope" type="mlib://BLUE_API_S1#/-/complexType{http://schemas.xmlsoap.org/soap/envelope/}Envelope"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Header;XSDElementDeclaration=1" name="Header" type="mlib://BLUE_API_S1#/-/complexType{http://schemas.xmlsoap.org/soap/envelope/}Header"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Body;XSDElementDeclaration=2" name="Body" type="mlib://BLUE_API_S1#/-/complexType{http://schemas.xmlsoap.org/soap/envelope/}Body"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Fault;XSDElementDeclaration=3" name="Fault" type="mlib://BLUE_API_S1#/-/complexType{http://schemas.xmlsoap.org/soap/envelope/}Fault"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Envelope;XSDComplexTypeDefinition" name="Envelope"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Header;XSDComplexTypeDefinition=1" name="Header"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Body;XSDComplexTypeDefinition=2" name="Body"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//Fault;XSDComplexTypeDefinition=3" name="Fault"/>
+    <complexType href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//FaultString;XSDComplexTypeDefinition=4" name="FaultString"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//detail;XSDComplexTypeDefinition=5" name="detail"/>
+    <simpleType href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//encodingStyle;XSDSimpleTypeDefinition" name="encodingStyle" variety="list"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//mustUnderstand;XSDAttributeDeclaration" name="mustUnderstand"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//actor;XSDAttributeDeclaration=1" name="actor"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//encodingStyle;XSDAttributeDeclaration=2" name="encodingStyle"/>
+    <attributeGroup href="platform:/resource/BLUE_API_S1/IBMdefined/org/xmlsoap/schemas/soap/envelope/soapenv11.xsd#//encodingStyle;XSDAttributeGroupDefinition" name="encodingStyle"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd" prefix="tns" targetNamespace="http://tempuri.org/">
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//Activate;XSDElementDeclaration" name="Activate"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ActivateResponse;XSDElementDeclaration=1" name="ActivateResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ValidateCard;XSDElementDeclaration=2" name="ValidateCard"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ValidateCardResponse;XSDElementDeclaration=3" name="ValidateCardResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ExecuteAnyResponseInfo;XSDElementDeclaration=4" name="ExecuteAnyResponseInfo"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ExecuteAnyResponseInfoResponse;XSDElementDeclaration=5" name="ExecuteAnyResponseInfoResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ExecuteAnyCardInfoCL;XSDElementDeclaration=6" name="ExecuteAnyCardInfoCL"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ExecuteAnyCardInfoCLResponse;XSDElementDeclaration=7" name="ExecuteAnyCardInfoCLResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//Collect;XSDElementDeclaration=8" name="Collect"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CollectResponse;XSDElementDeclaration=9" name="CollectResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CollectV2;XSDElementDeclaration=10" name="CollectV2"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CollectV2Response;XSDElementDeclaration=11" name="CollectV2Response"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//GetBalance;XSDElementDeclaration=12" name="GetBalance"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//GetBalanceResponse;XSDElementDeclaration=13" name="GetBalanceResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//Redeem;XSDElementDeclaration=14" name="Redeem"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//RedeemResponse;XSDElementDeclaration=15" name="RedeemResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//RedeemV2;XSDElementDeclaration=16" name="RedeemV2"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//RedeemV2Response;XSDElementDeclaration=17" name="RedeemV2Response"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CollectOffline;XSDElementDeclaration=18" name="CollectOffline"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CollectOfflineResponse;XSDElementDeclaration=19" name="CollectOfflineResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//VerifyWebService;XSDElementDeclaration=20" name="VerifyWebService"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//VerifyWebServiceResponse;XSDElementDeclaration=21" name="VerifyWebServiceResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//RenewMembership;XSDElementDeclaration=22" name="RenewMembership"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//RenewMembershipResponse;XSDElementDeclaration=23" name="RenewMembershipResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//TransferPoints;XSDElementDeclaration=24" name="TransferPoints"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//TransferPointsResponse;XSDElementDeclaration=25" name="TransferPointsResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnGetInfo;XSDElementDeclaration=26" name="ReturnGetInfo"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnGetInfoResponse;XSDElementDeclaration=27" name="ReturnGetInfoResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnRegister;XSDElementDeclaration=28" name="ReturnRegister"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnRegisterResponse;XSDElementDeclaration=29" name="ReturnRegisterResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnByMoneyRegister;XSDElementDeclaration=30" name="ReturnByMoneyRegister"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnByMoneyRegisterResponse;XSDElementDeclaration=31" name="ReturnByMoneyRegisterResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnByMoneyRegisterV2;XSDElementDeclaration=32" name="ReturnByMoneyRegisterV2"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ReturnByMoneyRegisterV2Response;XSDElementDeclaration=33" name="ReturnByMoneyRegisterV2Response"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ChangeCardByImage;XSDElementDeclaration=34" name="ChangeCardByImage"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ChangeCardByImageResponse;XSDElementDeclaration=35" name="ChangeCardByImageResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//SendTransactionDelay;XSDElementDeclaration=36" name="SendTransactionDelay"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//SendTransactionDelayResponse;XSDElementDeclaration=37" name="SendTransactionDelayResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//FindCardByPOSArray;XSDElementDeclaration=38" name="FindCardByPOSArray"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//FindCardByPOSArrayResponse;XSDElementDeclaration=39" name="FindCardByPOSArrayResponse"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//FindCardByPOSSingle;XSDElementDeclaration=40" name="FindCardByPOSSingle"/>
+    <element href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//FindCardByPOSSingleResponse;XSDElementDeclaration=41" name="FindCardByPOSSingleResponse"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ResponseInfo;XSDComplexTypeDefinition" name="ResponseInfo"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CardInfoCL;XSDComplexTypeDefinition=1" name="CardInfoCL"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ResponseInfoV2;XSDComplexTypeDefinition=2" name="ResponseInfoV2"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//CardInfo2;XSDComplexTypeDefinition=3" name="CardInfo2"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//ArrayOfFindUserPOSResult;XSDComplexTypeDefinition=4" name="ArrayOfFindUserPOSResult"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd#//FindUserPOSResult;XSDComplexTypeDefinition=5" name="FindUserPOSResult"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd" prefix="tns" targetNamespace="http://www.w3.org/2003/05/soap-envelope">
+    <import name="IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd" targetNamespace="http://www.w3.org/XML/1998/namespace"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Envelope;XSDElementDeclaration" name="Envelope" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}Envelope"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Header;XSDElementDeclaration=1" name="Header" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}Header"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Body;XSDElementDeclaration=2" name="Body" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}Body"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Fault;XSDElementDeclaration=3" name="Fault" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}Fault"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//NotUnderstood;XSDElementDeclaration=4" name="NotUnderstood" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}NotUnderstoodType"/>
+    <element href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Upgrade;XSDElementDeclaration=5" name="Upgrade" type="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2003/05/soap-envelope}UpgradeType"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Envelope;XSDComplexTypeDefinition" name="Envelope"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Header;XSDComplexTypeDefinition=1" name="Header"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Body;XSDComplexTypeDefinition=2" name="Body"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//Fault;XSDComplexTypeDefinition=3" name="Fault"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//faultreason;XSDComplexTypeDefinition=4" name="faultreason"/>
+    <complexType href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//reasontext;XSDComplexTypeDefinition=5" name="reasontext"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//faultcode;XSDComplexTypeDefinition=6" name="faultcode"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//subcode;XSDComplexTypeDefinition=7" name="subcode"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//detail;XSDComplexTypeDefinition=8" name="detail"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//NotUnderstoodType;XSDComplexTypeDefinition=9" name="NotUnderstoodType"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//SupportedEnvType;XSDComplexTypeDefinition=10" name="SupportedEnvType"/>
+    <complexType baseType="mlib://BLUE_API_S1#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType" href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//UpgradeType;XSDComplexTypeDefinition=11" name="UpgradeType"/>
+    <simpleType href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//faultcodeEnum;XSDSimpleTypeDefinition" name="faultcodeEnum" variety="atomic"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//mustUnderstand;XSDAttributeDeclaration" name="mustUnderstand"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//relay;XSDAttributeDeclaration=1" name="relay"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//role;XSDAttributeDeclaration=2" name="role"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/_2003/_05/soapenvelope/soapenv12.xsd#//encodingStyle;XSDAttributeDeclaration=3" name="encodingStyle"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/BLUE_API_S1/blueengine.asmx_wsdl.xsd" prefix="tns" targetNamespace="http://tempuri.org/">
+    <include name="/BLUE_API_S1/blueengine.asmx_wsdl_InlineSchema1.xsd" targetNamespace="http://tempuri.org/"/>
+  </XSDCollection>
+  <XSDCollection href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd" prefix="xml" targetNamespace="http://www.w3.org/XML/1998/namespace">
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd#//lang;XSDAttributeDeclaration" name="lang"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd#//space;XSDAttributeDeclaration=1" name="space"/>
+    <attribute href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd#//base;XSDAttributeDeclaration=2" name="base"/>
+    <attributeGroup href="platform:/resource/BLUE_API_S1/IBMdefined/org/w3/www/xml/_1998/namespace/xml.xsd#//specialAttrs;XSDAttributeGroupDefinition" name="specialAttrs"/>
+  </XSDCollection>
+</MessageBroker>

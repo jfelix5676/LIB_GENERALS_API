@@ -1,0 +1,1065 @@
+BROKER SCHEMA mqsi
+PATH com.ibm.esb;
+
+DECLARE DataResult ROW;
+
+DECLARE NS NAMESPACE 'http://tempuri.org/';
+DECLARE NS1 NAMESPACE 'http://schemas.xmlsoap.org/soap/envelope/';
+
+CREATE COMPUTE MODULE Collect_Request
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN 
+		-- DECLARATION
+		DECLARE BLUE_URL, BLUE_USER, BLUE_PASS, BLUE_METHOD, BLUE_AUTH, BLUE_TOKEN, USER_AUTH, TOKEN CHARACTER '';
+		DECLARE cardId,transactionDate, amount, totalAmount, ticketId, storeId, referenceId3, referenceId4, cashierCode, cashierName, supervisorCode, supervisorName, sellerCode, sellerName, products CHARACTER '';
+		
+		SET BLUE_URL = COALESCE( REPLACE(readConfigurationManagement('BLUE_URL'), ' ', ''), '');
+		SET BLUE_USER = COALESCE( REPLACE(readConfigurationManagement('BLUE_USER'), ' ', ''), '');
+		SET BLUE_PASS = COALESCE( REPLACE(readConfigurationManagement('BLUE_PASS'), ' ', ''), '');
+		SET BLUE_TOKEN = COALESCE( REPLACE(readConfigurationManagement('BLUE_TOKEN'), ' ', ''), '');
+		SET BLUE_AUTH = COALESCE( REPLACE(readConfigurationManagement('BLUE_AUTH'), ' ', ''), '');
+		SET BLUE_METHOD = COALESCE( REPLACE(Environment.Variables.Log.Method, ' ', ''), '');
+		
+		SET USER_AUTH = COALESCE( InputRoot.HTTPInputHeader."X-Auth-User", '');
+		SET TOKEN = COALESCE(InputRoot.HTTPInputHeader."X-Auth-Token", '');
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET amount = COALESCE( InputRoot.JSON.Data.amount, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET referenceId3 = COALESCE( InputRoot.JSON.Data.referenceId3, '');
+		SET referenceId4 = COALESCE( InputRoot.JSON.Data.referenceId4, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cashierName = COALESCE( InputRoot.JSON.Data.cashierName, '');
+		SET supervisorCode = COALESCE( InputRoot.JSON.Data.supervisorCode, '');
+		SET supervisorName = COALESCE( InputRoot.JSON.Data.supervisorName, '');
+		SET sellerCode = COALESCE( InputRoot.JSON.Data.sellerCode, '');
+		SET sellerName = COALESCE( InputRoot.JSON.Data.sellerName, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		-- VALIDATION
+		IF BLUE_URL = '' OR BLUE_URL IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_URL'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_USER = '' OR BLUE_USER IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_USER'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_PASS = '' OR BLUE_PASS IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_PASS'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_TOKEN = '' OR BLUE_TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_TOKEN'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_AUTH = '' OR BLUE_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_AUTH'' Vacio', ''));
+		END IF;
+		
+		IF USER_AUTH = '' OR USER_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el USER_AUTH necesaria''.', ''));
+		END IF;
+		
+		IF TOKEN = '' OR TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el X-Auth-Token necesaria''.', ''));
+		END IF;
+		
+		IF CONTAINS(BLUE_AUTH, ',') THEN
+			DECLARE BLUE_AUTH_FOUND BOOLEAN FALSE;
+			DECLARE DataSet ROW;
+			
+			CALL Split(BLUE_AUTH, DataSet, ',');
+			
+			DECLARE UsersDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(UsersDS) = TRUE DO
+	
+				IF USER_AUTH = UsersDS THEN
+					SET BLUE_AUTH_FOUND = TRUE;
+				END IF;
+				
+				MOVE UsersDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			IF BLUE_AUTH_FOUND <> TRUE OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		ELSE
+			IF USER_AUTH <> BLUE_AUTH OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		END IF;
+		
+		IF CONTAINS(referenceId3, 'DPVL-') THEN
+			DECLARE BLUE_REFERENCE CHARACTER '';
+			DECLARE DataSet ROW;
+			
+			CALL Split(referenceId3, DataSet, '|');
+			
+			DECLARE ReferenceDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(ReferenceDS) = TRUE DO
+				
+				IF BLUE_REFERENCE = '' THEN
+					SET BLUE_REFERENCE = BLUE_REFERENCE || ReferenceDS;
+				ELSE
+					IF CONTAINS(ReferenceDS, 'DPVL-') THEN
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || 'DPVL';
+					ELSE
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || ReferenceDS;
+					END IF;
+				END IF;
+								
+				MOVE ReferenceDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			SET referenceId3 = BLUE_REFERENCE;
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPRequestHeader';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'Content-Type' VALUE 'text/xml; charset=utf-8';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'SOAPAction' VALUE NS || 'Collect'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC') TYPE Name NAME 'XMLNSC';
+		SET OutputRoot.XMLNSC.NS:Collect.NS:loginId = BLUE_USER;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:password = BLUE_PASS;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:cardId = cardId;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:transactionDate = transactionDate;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:amount = amount;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:totalAmount = totalAmount;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:ticketid = ticketId;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:storeid = storeId;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:referenceId3 = referenceId3;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:referenceId4 = referenceId4;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:cashierCode = cashierCode;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:cashierName = cashierName;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:supervisorCode = supervisorCode;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:supervisorName = supervisorName;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:sellerCode = sellerCode;
+		SET OutputRoot.XMLNSC.NS:Collect.NS:sellerName = sellerName;		
+		SET OutputRoot.XMLNSC.NS:Collect.NS:Products = REPLACE(REPLACE(products, ',' ,'|'), '-', '|');
+		
+		-- LOCAL ENVIRONMENT 
+		CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.WebServiceURL = BLUE_URL;
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.Timeout = 360;
+		SET OutputLocalEnvironment.Destination.Data = InputRoot.JSON.Data;
+		SET OutputLocalEnvironment.Destination.RequestData = CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 
+		SET Environment.Variables.Log.Type = COALESCE('REST API', ''); 
+		SET Environment.Variables.Log.BackEnd = COALESCE('SOAP Services', ''); 
+		SET Environment.Variables.Log.BackEndTransaction = 'Request: ' || CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+ 
+CREATE COMPUTE MODULE Collect_Response
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, TransactionPoints, PersonalMessage, PromotinalMessage, TotalPoints, TransactionPointsInCash, TotalPointsInCash CHARACTER '';
+		DECLARE transactionDate, storeId, cashierCode, cardId, ticketId, amount, totalAmount, products, transactionCode CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:ResultId, '');
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:Description, '');
+		SET TransactionPoints = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:TransactionPoints, '');
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:PersonalMessage, '');
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:PromotinalMessage, '');
+		SET TotalPoints = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:TotalPoints, '');
+		SET TransactionPointsInCash = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:TransactionPointsInCash, '');
+		SET TotalPointsInCash = COALESCE( InputRoot.XMLNSC.NS:CollectResponse.NS:CollectResult.NS:TotalPointsInCash, '');
+		
+		SET transactionDate = COALESCE( InputLocalEnvironment.Destination.Data.transactionDate, '');
+		SET storeId = COALESCE( InputLocalEnvironment.Destination.Data.storeId, '');
+		SET cashierCode = COALESCE( InputLocalEnvironment.Destination.Data.cashierCode, '');
+		SET cardId = COALESCE( InputLocalEnvironment.Destination.Data.cardId, '');
+		SET ticketId = COALESCE( InputLocalEnvironment.Destination.Data.ticketId, '');
+		SET amount = COALESCE( InputLocalEnvironment.Destination.Data.amount, '');
+		SET totalAmount = COALESCE( InputLocalEnvironment.Destination.Data.totalAmount, '');
+		SET products = COALESCE( InputLocalEnvironment.Destination.Data.products, '');
+		SET transactionCode = '2';
+		
+		-- VALIDATION
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.TransactionPoints = TransactionPoints;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.TotalPoints = TotalPoints;
+		SET OutputRoot.JSON.Data.TransactionPointsInCash = TransactionPointsInCash;
+		SET OutputRoot.JSON.Data.TotalPointsInCash = TotalPointsInCash;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		IF ResultID >= 0 THEN -- VALIDACION LOG EXITOSO
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionDate = transactionDate;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.storeId = storeId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cashierCode = cashierCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cardId = cardId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ticketId = ticketId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.totalAmount = totalAmount;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ResultID = ResultID;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionCode = transactionCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.products = products;
+		END IF;
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+
+CREATE COMPUTE MODULE GetBalance_Request
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN 
+		-- DECLARATION 
+		DECLARE BLUE_URL, BLUE_USER, BLUE_PASS, BLUE_METHOD, BLUE_AUTH, BLUE_TOKEN, USER_AUTH, TOKEN CHARACTER '';
+		DECLARE cardId, transactionDate, ticketId, storeId, referenceId3, referenceId4, cashierCode, cashierName, supervisorCode, supervisorName, sellerCode, sellerName CHARACTER '';
+		
+		SET BLUE_URL = COALESCE( REPLACE(readConfigurationManagement('BLUE_URL'), ' ', ''), '');
+		SET BLUE_USER = COALESCE( REPLACE(readConfigurationManagement('BLUE_USER'), ' ', ''), '');
+		SET BLUE_PASS = COALESCE( REPLACE(readConfigurationManagement('BLUE_PASS'), ' ', ''), '');
+		SET BLUE_TOKEN = COALESCE( REPLACE(readConfigurationManagement('BLUE_TOKEN'), ' ', ''), '');
+		SET BLUE_AUTH = COALESCE( REPLACE(readConfigurationManagement('BLUE_AUTH'), ' ', ''), '');
+		SET BLUE_METHOD = COALESCE( REPLACE(Environment.Variables.Log.Method, ' ', ''), '');
+		
+		SET USER_AUTH = COALESCE( InputRoot.HTTPInputHeader."X-Auth-User", '');
+		SET TOKEN = COALESCE(InputRoot.HTTPInputHeader."X-Auth-Token", '');
+		
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET referenceId3 = COALESCE( InputRoot.JSON.Data.referenceId3, '');
+		SET referenceId4 = COALESCE( InputRoot.JSON.Data.referenceId4, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cashierName = COALESCE( InputRoot.JSON.Data.cashierName, '');
+		SET supervisorCode = COALESCE( InputRoot.JSON.Data.supervisorCode, '');
+		SET supervisorName = COALESCE( InputRoot.JSON.Data.supervisorName, '');
+		SET sellerCode = COALESCE( InputRoot.JSON.Data.sellerCode, '');
+		SET sellerName = COALESCE( InputRoot.JSON.Data.sellerName, '');
+		
+		-- VALIDATION 		
+		IF BLUE_URL = '' OR BLUE_URL IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_URL'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_USER = '' OR BLUE_USER IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_USER'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_PASS = '' OR BLUE_PASS IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_PASS'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_TOKEN = '' OR BLUE_TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_TOKEN'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_AUTH = '' OR BLUE_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_AUTH'' Vacio', ''));
+		END IF;
+		
+		IF USER_AUTH = '' OR USER_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el USER_AUTH necesaria''.', ''));
+		END IF;
+		
+		IF TOKEN = '' OR TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el X-Auth-Token necesaria''.', ''));
+		END IF;
+		
+		IF CONTAINS(BLUE_AUTH, ',') THEN
+			DECLARE BLUE_AUTH_FOUND BOOLEAN FALSE;
+			DECLARE DataSet ROW;
+			
+			CALL Split(BLUE_AUTH, DataSet, ',');
+			
+			DECLARE UsersDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(UsersDS) = TRUE DO
+	
+				IF USER_AUTH = UsersDS THEN
+					SET BLUE_AUTH_FOUND = TRUE;
+				END IF;
+				
+				MOVE UsersDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			IF BLUE_AUTH_FOUND <> TRUE OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		ELSE
+			IF USER_AUTH <> BLUE_AUTH OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPRequestHeader';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'Content-Type' VALUE 'text/xml; charset=utf-8';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'SOAPAction' VALUE NS || 'GetBalance'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC') TYPE Name NAME 'XMLNSC';
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:loginId = BLUE_USER;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:password = BLUE_PASS;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:cardId = cardId;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:transactionDate = transactionDate;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:ticketid = ticketId;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:storeid = storeId;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:referenceId3 = referenceId3;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:referenceId4 = referenceId4;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:cashierCode = cashierCode;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:cashierName = cashierName;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:supervisorCode = supervisorCode;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:supervisorName = supervisorName;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:sellerCode = sellerCode;
+		SET OutputRoot.XMLNSC.NS:GetBalance.NS:sellerName = sellerName;
+		
+		-- LOCAL ENVIRONMENT 
+		CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.WebServiceURL = BLUE_URL;
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.Timeout = 360;
+		SET OutputLocalEnvironment.Destination.Data = InputRoot.JSON.Data;
+		SET OutputLocalEnvironment.Destination.RequestData = CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 
+		SET Environment.Variables.Log.Type = COALESCE('REST API', ''); 
+		SET Environment.Variables.Log.BackEnd = COALESCE('SOAP Services', ''); 
+		SET Environment.Variables.Log.BackEndTransaction = 'Request: ' || CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+ 
+CREATE COMPUTE MODULE GetBalance_Response
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, CardID, BalancePoints, BalanceAmount, StatusID, StatusDescription, Activate, Expire, CustomerID, CustomerName, PersonalMessage, PromotinalMessage, PointsToExpire, ExpireStatusDescriptionCustomer, ExpireStatusDescriptionSeller, ExpireStatusID, CardTypeID, Email CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ResultId, ''); 
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Description, ''); 
+		SET CardID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CardId, ''); 
+		SET BalancePoints = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:BalancePoints, ''); 
+		SET BalanceAmount = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:BalanceAmount, ''); 
+		SET StatusID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:StatusdId, ''); 
+		SET StatusDescription = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:StatusDescription, ''); 
+		SET Activate = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Activate, ''); 
+		SET Expire = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Expire, ''); 
+		SET CustomerID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CustomerId, ''); 
+		SET CustomerName = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CustomerName, ''); 
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PersonalMessage, ''); 
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PromotinalMessage, ''); 
+		SET PointsToExpire = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PointsToExpire, ''); 
+		SET ExpireStatusDescriptionCustomer = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusDescriptionCustomer, ''); 
+		SET ExpireStatusDescriptionSeller = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusDescriptionSeller, ''); 
+		SET ExpireStatusID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusID, ''); 
+		SET CardTypeID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CardTypeID, ''); 
+		SET Email = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Email, ''); 
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.CardID = CardID;
+		SET OutputRoot.JSON.Data.BalancePoints = BalancePoints;
+		SET OutputRoot.JSON.Data.BalanceAmount = BalanceAmount;
+		SET OutputRoot.JSON.Data.StatusID = StatusID;
+		SET OutputRoot.JSON.Data.StatusDescription = StatusDescription;
+		SET OutputRoot.JSON.Data.Activate = Activate;
+		SET OutputRoot.JSON.Data.Expire = Expire;
+		SET OutputRoot.JSON.Data.CustomerID = CustomerID;
+		SET OutputRoot.JSON.Data.CustomerName = CustomerName;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.PointsToExpire = PointsToExpire;
+		SET OutputRoot.JSON.Data.ExpireStatusDescriptionCustomer = ExpireStatusDescriptionCustomer;
+		SET OutputRoot.JSON.Data.ExpireStatusDescriptionSeller = ExpireStatusDescriptionSeller;
+		SET OutputRoot.JSON.Data.ExpireStatusID = ExpireStatusID;
+		SET OutputRoot.JSON.Data.CardTypeID = CardTypeID;
+		SET OutputRoot.JSON.Data.Email = Email;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment; 
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+
+CREATE COMPUTE MODULE Redeem_Request
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN 
+		-- DECLARATION 
+		DECLARE BLUE_URL, BLUE_USER, BLUE_PASS, BLUE_METHOD, BLUE_AUTH, BLUE_TOKEN, USER_AUTH, TOKEN CHARACTER '';
+		DECLARE cardId,transactionDate, amount, totalAmount, ticketId, storeId, referenceId3, referenceId4, cashierCode, cashierName, supervisorCode, supervisorName, sellerCode, sellerName, localHour, products CHARACTER '';
+		
+		SET BLUE_URL = COALESCE( REPLACE(readConfigurationManagement('BLUE_URL'), ' ', ''), '');
+		SET BLUE_USER = COALESCE( REPLACE(readConfigurationManagement('BLUE_USER'), ' ', ''), '');
+		SET BLUE_PASS = COALESCE( REPLACE(readConfigurationManagement('BLUE_PASS'), ' ', ''), '');
+		SET BLUE_TOKEN = COALESCE( REPLACE(readConfigurationManagement('BLUE_TOKEN'), ' ', ''), '');
+		SET BLUE_AUTH = COALESCE( REPLACE(readConfigurationManagement('BLUE_AUTH'), ' ', ''), '');
+		SET BLUE_METHOD = COALESCE( REPLACE(Environment.Variables.Log.Method, ' ', ''), '');
+		
+		SET USER_AUTH = COALESCE( InputRoot.HTTPInputHeader."X-Auth-User", '');
+		SET TOKEN = COALESCE(InputRoot.HTTPInputHeader."X-Auth-Token", '');
+		
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET amount = COALESCE( InputRoot.JSON.Data.amount, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET referenceId3 = COALESCE( InputRoot.JSON.Data.referenceId3, '');
+		SET referenceId4 = COALESCE( InputRoot.JSON.Data.referenceId4, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cashierName = COALESCE( InputRoot.JSON.Data.cashierName, '');
+		SET supervisorCode = COALESCE( InputRoot.JSON.Data.supervisorCode, '');
+		SET supervisorName = COALESCE( InputRoot.JSON.Data.supervisorName, '');
+		SET sellerCode = COALESCE( InputRoot.JSON.Data.sellerCode, '');
+		SET sellerName = COALESCE( InputRoot.JSON.Data.sellerName, '');
+		SET localHour = COALESCE( InputRoot.JSON.Data.localHour, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		-- VALIDATION
+		IF BLUE_URL = '' OR BLUE_URL IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_URL'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_USER = '' OR BLUE_USER IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_USER'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_PASS = '' OR BLUE_PASS IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_PASS'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_TOKEN = '' OR BLUE_TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_TOKEN'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_AUTH = '' OR BLUE_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_AUTH'' Vacio', ''));
+		END IF;
+		
+		IF USER_AUTH = '' OR USER_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el USER_AUTH necesaria''.', ''));
+		END IF;
+		
+		IF TOKEN = '' OR TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el X-Auth-Token necesaria''.', ''));
+		END IF;
+		
+		IF CONTAINS(BLUE_AUTH, ',') THEN
+			DECLARE BLUE_AUTH_FOUND BOOLEAN FALSE;
+			DECLARE DataSet ROW;
+			
+			CALL Split(BLUE_AUTH, DataSet, ',');
+			
+			DECLARE UsersDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(UsersDS) = TRUE DO
+	
+				IF USER_AUTH = UsersDS THEN
+					SET BLUE_AUTH_FOUND = TRUE;
+				END IF;
+				
+				MOVE UsersDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			IF BLUE_AUTH_FOUND <> TRUE OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		ELSE
+			IF USER_AUTH <> BLUE_AUTH OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		END IF;
+		
+		IF CONTAINS(referenceId3, 'DPVL-') THEN
+			DECLARE BLUE_REFERENCE CHARACTER '';
+			DECLARE DataSet ROW;
+			
+			CALL Split(referenceId3, DataSet, '|');
+			
+			DECLARE ReferenceDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(ReferenceDS) = TRUE DO
+				
+				IF BLUE_REFERENCE = '' THEN
+					SET BLUE_REFERENCE = BLUE_REFERENCE || ReferenceDS;
+				ELSE
+					IF CONTAINS(ReferenceDS, 'DPVL-') THEN
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || 'DPVL';
+					ELSE
+						SET BLUE_REFERENCE = BLUE_REFERENCE || '|' || ReferenceDS;
+					END IF;
+				END IF;
+								
+				MOVE ReferenceDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			SET referenceId3 = BLUE_REFERENCE;
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPRequestHeader';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'Content-Type' VALUE 'text/xml; charset=utf-8';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'SOAPAction' VALUE NS || 'Redeem'; 		
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC') TYPE Name NAME 'XMLNSC';
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:loginId = BLUE_USER;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:password = BLUE_PASS;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cardId = cardId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:transactionDate = transactionDate;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:amount = amount;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:totalamount = totalAmount;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:ticketid = ticketId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:storeid = storeId;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:referenceId3 = referenceId3;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:referenceId4 = referenceId4;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cashierCode = cashierCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:cashierName = cashierName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:supervisorCode = supervisorCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:supervisorName = supervisorName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:sellerCode = sellerCode;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:sellerName = sellerName;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:localHour = localHour;
+		SET OutputRoot.XMLNSC.NS:Redeem.NS:Products = REPLACE(REPLACE(products, ',' ,'|'), '-', '|');
+		
+		-- LOCAL ENVIRONMENT 
+		CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.WebServiceURL = BLUE_URL;
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.Timeout = 360;
+		SET OutputLocalEnvironment.Destination.Data = InputRoot.JSON.Data;
+		SET OutputLocalEnvironment.Destination.RequestData = CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 
+		SET Environment.Variables.Log.Type = COALESCE('REST API', ''); 
+		SET Environment.Variables.Log.BackEnd = COALESCE('SOAP Services', ''); 
+		SET Environment.Variables.Log.BackEndTransaction = 'Request: ' || CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+ 
+CREATE COMPUTE MODULE Redeem_Response
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, TransactionPoints, PersonalMessage, PromotinalMessage, TotalPoints, TransactionPointsInCash, TotalPointsInCash CHARACTER '';
+		DECLARE transactionDate, storeId, cashierCode, cardId, ticketId, amount, totalAmount, products, transactionCode CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:ResultId, '');
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:Description, '');
+		SET TransactionPoints = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:TransactionPoints, '');
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:PersonalMessage, '');
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:PromotinalMessage, '');
+		SET TotalPoints = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:TotalPoints, '');
+		SET TransactionPointsInCash = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:TransactionPointsInCash, '');
+		SET TotalPointsInCash = COALESCE( InputRoot.XMLNSC.NS:RedeemResponse.NS:RedeemResult.NS:TotalPointsInCash, '');
+		
+		SET transactionDate = COALESCE( InputLocalEnvironment.Destination.Data.transactionDate, '');
+		SET storeId = COALESCE( InputLocalEnvironment.Destination.Data.storeId, '');
+		SET cashierCode = COALESCE( InputLocalEnvironment.Destination.Data.cashierCode, '');
+		SET cardId = COALESCE( InputLocalEnvironment.Destination.Data.cardId, '');
+		SET ticketId = COALESCE( InputLocalEnvironment.Destination.Data.ticketId, '');
+		SET amount = COALESCE( InputLocalEnvironment.Destination.Data.amount, '');
+		SET totalAmount = COALESCE( InputLocalEnvironment.Destination.Data.totalAmount, '');
+		SET products = COALESCE( InputLocalEnvironment.Destination.Data.products, '');
+		SET transactionCode = '3';
+		
+		-- VALIDATION
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.TransactionPoints = TransactionPoints;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.TotalPoints = TotalPoints;
+		SET OutputRoot.JSON.Data.TransactionPointsInCash = TransactionPointsInCash;
+		SET OutputRoot.JSON.Data.TotalPointsInCash = TotalPointsInCash;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		 
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		IF ResultID >= 0 THEN -- VALIDACION LOG EXITOSO
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionDate = transactionDate;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.storeId = storeId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cashierCode = cashierCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cardId = cardId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ticketId = ticketId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.totalAmount = totalAmount;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ResultID = ResultID;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionCode = transactionCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.products = products;
+		END IF;
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+
+CREATE COMPUTE MODULE ReturnByMoneyRegister_Request
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN 
+		-- DECLARATION 
+		DECLARE BLUE_URL, BLUE_USER, BLUE_PASS, BLUE_METHOD, BLUE_AUTH, BLUE_TOKEN, USER_AUTH, TOKEN CHARACTER '';
+		DECLARE cardId,transactionDate, amount, totalAmount, ticketId, storeId, referenceId3, referenceId4, cashierCode, cashierName, supervisorCode, supervisorName, sellerCode, sellerName, products CHARACTER '';
+		
+		SET BLUE_URL = COALESCE( REPLACE(readConfigurationManagement('BLUE_URL'), ' ', ''), '');
+		SET BLUE_USER = COALESCE( REPLACE(readConfigurationManagement('BLUE_USER'), ' ', ''), '');
+		SET BLUE_PASS = COALESCE( REPLACE(readConfigurationManagement('BLUE_PASS'), ' ', ''), '');
+		SET BLUE_TOKEN = COALESCE( REPLACE(readConfigurationManagement('BLUE_TOKEN'), ' ', ''), '');
+		SET BLUE_AUTH = COALESCE( REPLACE(readConfigurationManagement('BLUE_AUTH'), ' ', ''), '');
+		SET BLUE_METHOD = COALESCE( REPLACE(Environment.Variables.Log.Method, ' ', ''), '');
+		
+		SET USER_AUTH = COALESCE( InputRoot.HTTPInputHeader."X-Auth-User", '');
+		SET TOKEN = COALESCE(InputRoot.HTTPInputHeader."X-Auth-Token", '');
+		
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET amount = COALESCE( InputRoot.JSON.Data.amount, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET referenceId3 = COALESCE( InputRoot.JSON.Data.referenceId3, '');
+		SET referenceId4 = COALESCE( InputRoot.JSON.Data.referenceId4, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cashierName = COALESCE( InputRoot.JSON.Data.cashierName, '');
+		SET supervisorCode = COALESCE( InputRoot.JSON.Data.supervisorCode, '');
+		SET supervisorName = COALESCE( InputRoot.JSON.Data.supervisorName, '');
+		SET sellerCode = COALESCE( InputRoot.JSON.Data.sellerCode, '');
+		SET sellerName = COALESCE( InputRoot.JSON.Data.sellerName, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		-- VALIDATION 		
+		IF BLUE_URL = '' OR BLUE_URL IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_URL'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_USER = '' OR BLUE_USER IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_USER'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_PASS = '' OR BLUE_PASS IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_PASS'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_TOKEN = '' OR BLUE_TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_TOKEN'' Vacio', ''));
+		END IF;
+		
+		IF BLUE_AUTH = '' OR BLUE_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con las Configuraciones -- Campo ''BLUE_AUTH'' Vacio', ''));
+		END IF;
+		
+		IF USER_AUTH = '' OR USER_AUTH IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el USER_AUTH necesaria''.', ''));
+		END IF;
+		
+		IF TOKEN = '' OR TOKEN IS NULL THEN
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No ingresaste el X-Auth-Token necesaria''.', ''));
+		END IF;
+		
+		IF CONTAINS(BLUE_AUTH, ',') THEN
+			DECLARE BLUE_AUTH_FOUND BOOLEAN FALSE;
+			DECLARE DataSet ROW;
+			
+			CALL Split(BLUE_AUTH, DataSet, ',');
+			
+			DECLARE UsersDS REFERENCE TO DataSet.Array[1];
+			WHILE LASTMOVE(UsersDS) = TRUE DO
+	
+				IF USER_AUTH = UsersDS THEN
+					SET BLUE_AUTH_FOUND = TRUE;
+				END IF;
+				
+				MOVE UsersDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+			
+			IF BLUE_AUTH_FOUND <> TRUE OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		ELSE
+			IF USER_AUTH <> BLUE_AUTH OR TOKEN <> BLUE_TOKEN THEN
+				THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.', ''));
+			END IF;
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPRequestHeader';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'Content-Type' VALUE 'text/xml; charset=utf-8';
+		CREATE LASTCHILD OF OutputRoot.HTTPRequestHeader TYPE NameValue NAME 'SOAPAction' VALUE NS || 'ReturnByMoneyRegister'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('XMLNSC') TYPE Name NAME 'XMLNSC';
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:loginId = BLUE_USER;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:password = BLUE_PASS;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:cardId = cardId;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:transactionDate = transactionDate;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:amount = amount;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:totalAmount = totalAmount;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:ticketid = ticketId;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:storeid = storeId;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:referenceId3 = referenceId3;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:referenceId4 = referenceId4;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:cashierCode = cashierCode;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:cashierName = cashierName;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:supervisorCode = supervisorCode;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:supervisorName = supervisorName;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:sellerCode = sellerCode;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:sellerName = sellerName;
+		SET OutputRoot.XMLNSC.NS:ReturnByMoneyRegister.NS:products = REPLACE(REPLACE(products, ',' ,'|'), '-', '|');
+		
+		-- LOCAL ENVIRONMENT 
+		CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.WebServiceURL = BLUE_URL;
+		SET OutputLocalEnvironment.Destination.SOAP.Transport.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.Timeout = 360;
+		SET OutputLocalEnvironment.Destination.Data = InputRoot.JSON.Data;
+		SET OutputLocalEnvironment.Destination.RequestData = CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 
+		SET Environment.Variables.Log.Type = COALESCE('REST API', ''); 
+		SET Environment.Variables.Log.BackEnd = COALESCE('SOAP Services', ''); 
+		SET Environment.Variables.Log.BackEndTransaction = 'Request: ' || CAST(ASBITSTREAM(OutputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+ 
+CREATE COMPUTE MODULE ReturnByMoneyRegister_Response
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, TransactionPoints, PersonalMessage, PromotinalMessage, TotalPoints, TransactionPointsInCash, TotalPointsInCash CHARACTER '';
+		DECLARE transactionDate, storeId, cashierCode, cardId, ticketId, amount, totalAmount, products, transactionCode CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:ResultId, '');
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:Description, '');
+		SET TransactionPoints = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TransactionPoints, '');
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:PersonalMessage, '');
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:PromotinalMessage, '');
+		SET TotalPoints = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TotalPoints, '');
+		SET TransactionPointsInCash = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TransactionPointsInCash, '');
+		SET TotalPointsInCash = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TotalPointsInCash, '');
+		
+		SET transactionDate = COALESCE( InputLocalEnvironment.Destination.Data.transactionDate, '');
+		SET storeId = COALESCE( InputLocalEnvironment.Destination.Data.storeId, '');
+		SET cashierCode = COALESCE( InputLocalEnvironment.Destination.Data.cashierCode, '');
+		SET cardId = COALESCE( InputLocalEnvironment.Destination.Data.cardId, '');
+		SET ticketId = COALESCE( InputLocalEnvironment.Destination.Data.ticketId, '');
+		SET amount = COALESCE( InputLocalEnvironment.Destination.Data.amount, '');
+		SET totalAmount = COALESCE( InputLocalEnvironment.Destination.Data.totalAmount, '');
+		SET products = COALESCE( InputLocalEnvironment.Destination.Data.products, '');		
+		
+		-- VALIDATION		
+		IF COALESCE( InputLocalEnvironment.Destination.Data.referenceId3, '') = 'BON' THEN
+			SET transactionCode = '59';
+		ELSE
+			SET transactionCode = '57';
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.TransactionPoints = TransactionPoints;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.TotalPoints = TotalPoints;
+		SET OutputRoot.JSON.Data.TransactionPointsInCash = TransactionPointsInCash;
+		SET OutputRoot.JSON.Data.TotalPointsInCash = TotalPointsInCash;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		IF ResultID >= 0 THEN -- VALIDACION LOG EXITOSO
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionDate = transactionDate;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.storeId = storeId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cashierCode = cashierCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cardId = cardId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ticketId = ticketId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.totalAmount = totalAmount;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ResultID = ResultID;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionCode = transactionCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.products = products;
+		END IF;
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;
+
+CREATE COMPUTE MODULE ReviewTransaction
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN		
+		-- VALIDATION 		
+		IF CARDINALITY(InputLocalEnvironment.Destination.InsertTransaction[]) > 0 THEN			
+			-- HEADER 
+			CREATE NEXTSIBLING OF OutputRoot.Properties DOMAIN ('MQMD') TYPE Name NAME 'MQMD';
+			SET OutputRoot.MQMD.Format = MQFMT_STRING;
+			SET OutputRoot.MQMD.CodedCharSetId = 1208;
+			SET OutputRoot.MQMD.Encoding = 546;
+			 
+			-- BODY 
+			CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON';
+			SET OutputRoot.JSON.Data = InputLocalEnvironment.Destination.InsertTransaction;
+			
+			PROPAGATE TO TERMINAL 1;
+		END IF;
+		
+		-- BODY 
+		SET OutputRoot = InputRoot;
+		
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		
+		RETURN TRUE; 
+	END; 
+END MODULE;
+
+CREATE COMPUTE MODULE InsertTransaction
+	CREATE FUNCTION Main() RETURNS BOOLEAN 
+	BEGIN 
+		DECLARE transactionDate, storeId, cashierCode, cardId, resultId, transactionCode, ticketId, totalAmount, products CHARACTER '';
+		DECLARE transactionID INTEGER 0;
+		
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');		
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET resultId = COALESCE( InputRoot.JSON.Data.ResultID, '');
+		SET transactionCode = COALESCE( InputRoot.JSON.Data.transactionCode, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		CALL InsertTransactionHeader(transactionDate, storeId, cashierCode, cardId, CAST(resultId AS INTEGER), transactionCode, ticketId, CAST(totalAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), DataResult.Item[]) IN Database.{'Blue'}.{'dbo'};
+					
+		SET transactionID = COALESCE( DataResult.Item.Identity, '');
+			
+		IF CONTAINS(products, '-') THEN
+			CALL Split(products, DataResult, '-');
+		END IF;
+		
+		IF CARDINALITY(DataResult.Item[]) = 1 THEN
+			DECLARE DataSet ROW;	
+			CALL Split(products, DataSet, ',');
+						
+			DECLARE productNumber, productCount, productUnitAmount, productTotalAmount CHARACTER '';
+			SET productNumber = COALESCE(DataSet.Array[1], '');
+			SET productCount = COALESCE(DataSet.Array[3], '');
+			SET productUnitAmount = COALESCE(DataSet.Array[2], '');
+			SET productTotalAmount = COALESCE(DataSet.Array[4], '');
+						
+			CALL InsertTransactionDetails(CAST(transactionID AS INTEGER), productNumber, CAST(productCount AS INTEGER), CAST(productUnitAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), CAST(productTotalAmount AS CHARACTER FORMAT '##0.00;(##0.00)')) IN Database.{'Blue'}.{'dbo'};	
+		ELSE
+			DECLARE ProductsDS REFERENCE TO DataResult.Array[1];
+			WHILE LASTMOVE(ProductsDS) = TRUE DO
+				DECLARE DataSet ROW;		
+				CALL Split(ProductsDS, DataSet, ',');
+						
+				DECLARE productNumber, productCount, productUnitAmount, productTotalAmount CHARACTER '';
+				SET productNumber = COALESCE(DataSet.Array[1], '');
+				SET productCount = COALESCE(DataSet.Array[3], '');
+				SET productUnitAmount = COALESCE(DataSet.Array[2], '');
+				SET productTotalAmount = COALESCE(DataSet.Array[4], '');
+						
+				CALL InsertTransactionDetails(CAST(transactionID AS INTEGER), productNumber, CAST(productCount AS INTEGER), CAST(productUnitAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), CAST(productTotalAmount AS CHARACTER FORMAT '##0.00;(##0.00)')) IN Database.{'Blue'}.{'dbo'};
+					
+				MOVE ProductsDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+		END IF;
+		
+		RETURN FALSE; 
+	END; 
+END MODULE;
+
+
+CREATE COMPUTE MODULE SetThrow
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE ErrorMessage CHARACTER COALESCE('No respondio en el tiempo establecido el Servicio Externo (180 seg) O Esta respondiendo de formal anormal. Favor de contactar con el proveedor.', '');
+		
+		DECLARE ErrorNumber INTEGER 0;
+	    DECLARE ErrorText, ErrorDetail CHARACTER '';
+		
+		IF EXISTS(InputExceptionList.*[]) THEN
+			CREATE LASTCHILD OF Environment.XMLNSC DOMAIN('XMLNSC') TYPE Name Name 'ExceptionList'; 
+	    	SET Environment.XMLNSC.ExceptionList = InputExceptionList;
+	    	
+	    	DECLARE Label CHARACTER;
+	        DECLARE I INTEGER 1;
+			DECLARE start REFERENCE TO InputExceptionList.*[1];
+			
+			WHILE start.Number IS NOT NULL DO
+				SET ErrorNumber = start.Number;
+				
+				IF ErrorNumber BETWEEN 2000 AND 3999 THEN
+		        	SET ErrorDetail = start.Insert[CARDINALITY(start.Insert[])].Text;
+		        ELSE
+		            SET ErrorDetail = start.Text;
+		        END IF;
+		        
+		        MOVE start LASTCHILD;
+			END WHILE;
+			
+			SET ErrorMessage = ErrorDetail;			
+		ELSEIF EXISTS(InputRoot.BLOB.*[]) THEN
+			SET ErrorMessage = CAST(InputRoot.BLOB.BLOB AS CHARACTER CCSID 1208 ENCODING 546);
+		ELSEIF EXISTS(InputRoot.SOAP.*[]) THEN
+			SET ErrorMessage = InputRoot.SOAP.Body.NS1:Fault.faultstring;
+		END IF;
+		
+		THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (ErrorMessage);
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+CREATE COMPUTE MODULE SetFault
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN	
+		DECLARE DataResult ROW;
+		DECLARE ErrorNumber INTEGER 0;
+	    DECLARE ErrorText, ErrorDetail CHARACTER '';
+	    DECLARE ErrorBLOB BLOB;
+	   	
+	    CREATE LASTCHILD OF DataResult.XMLNSC DOMAIN('XMLNSC') TYPE Name Name 'ExceptionList';
+	    SET DataResult.XMLNSC.ExceptionList = InputExceptionList;
+	    
+		IF FIELDTYPE(InputExceptionList.[1]) IS NOT NULL THEN
+	        DECLARE Label CHARACTER;
+	        DECLARE I INTEGER 1;
+			DECLARE start REFERENCE TO InputExceptionList.*[1];
+			
+			WHILE start.Number IS NOT NULL DO
+				SET ErrorNumber = start.Number;
+				
+				IF ErrorNumber BETWEEN 1000 AND 1999 THEN
+					SET Label = 'Componentes de ejecución - Gestor de configuración';
+				ELSEIF ErrorNumber BETWEEN 2000 AND 2999 THEN
+					SET Label = 'Componentes de ejecución - Intermediario';
+				ELSEIF ErrorNumber BETWEEN 3000 AND 3999 THEN
+					SET Label = 'Componentes de ejecución - Nodos incorporados';
+				ELSEIF ErrorNumber BETWEEN 4000 AND 4999 THEN
+					SET Label = 'Componentes de ejecución - Nodos incorporados';
+				ELSEIF ErrorNumber BETWEEN 5000 AND 5999 THEN
+					SET Label = 'Componentes de ejecución - Analizadores';
+				ELSEIF ErrorNumber BETWEEN 6000 AND 6999 THEN
+					SET Label = 'Componentes de ejecución - Analizadores de WebSphere MQ y New Era';
+				ELSEIF ErrorNumber BETWEEN 7000 AND 7999 THEN
+					SET Label = 'Componentes de ejecución - Publicación Suscripción';
+				ELSEIF ErrorNumber BETWEEN 8000 AND 8999 THEN
+					SET Label = 'Componentes de ejecución - Mandatos';
+				ELSEIF ErrorNumber BETWEEN 9000 AND 9999 THEN
+					SET Label = 'Componentes de ejecución - z/OS y Derby';
+				ELSEIF ErrorNumber BETWEEN 11000 AND 11999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 12000 AND 12999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 13000 AND 13999 THEN
+					SET Label = 'Registro de actividades';
+				ELSEIF ErrorNumber BETWEEN 15000 AND 15999 THEN
+					SET Label = 'Mandatos';
+				ELSE
+					SET Label = start.Label;
+				END IF;
+				
+				SET ErrorText = COALESCE('Error de ' || Label, '');
+				
+				IF ErrorNumber BETWEEN 2000 AND 3999 THEN
+		        	SET ErrorDetail = start.Insert[CARDINALITY(start.Insert[])].Text;
+		        ELSE
+		            SET ErrorDetail = start.Text;
+		        END IF;
+		        
+		        MOVE start LASTCHILD;
+			END WHILE;
+		ELSEIF EXISTS(InputLocalEnvironment.HTTP.Input.Timeout[]) THEN
+			
+			SET ErrorNumber = 3743;
+			SET ErrorText = 'Componentes de ejecución - Nodos incorporados';
+			SET ErrorDetail = 'El Tiempo Establecido Expiro';
+		END IF;
+		
+		-- ENVIRONMENT
+		IF EXISTS(Environment.REST.[]) = FALSE AND EXISTS(InputRoot.HTTPInputHeader.[]) = TRUE THEN			
+			CALL readParameters(DataResult, InputRoot, InputLocalEnvironment);
+			
+			CREATE LASTCHILD OF Environment TYPE Name NAME 'REST';
+			SET Environment.REST.Input = DataResult.REST.Input;			
+		END IF;
+		
+		-- HEADER
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader';
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8';
+		IF ErrorDetail = 'Se encontraron problemas con la Solicitud -- ''No estás autorizado a consumir el servicio''.' THEN
+			SET OutputRoot.HTTPReplyHeader."X-Original-HTTP-Status-Code" = 401;
+		ELSE
+			SET OutputRoot.HTTPReplyHeader."X-Original-HTTP-Status-Code" = 500;
+		END IF;
+		
+		-- BODY
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON';
+		SET OutputRoot.JSON.Data.ErrorMessage.Codigo = ErrorNumber;		
+		SET OutputRoot.JSON.Data.ErrorMessage.Titulo = ErrorText;
+		SET OutputRoot.JSON.Data.ErrorMessage.Mensaje = ErrorDetail;
+		SET OutputRoot.JSON.Data.ErrorMessage.Detalle = BASE64ENCODE(COALESCE(ASBITSTREAM(Environment.XMLNSC.ExceptionList OPTIONS FolderBitStream ENCODING 546 CCSID 1208), ASBITSTREAM(DataResult.XMLNSC.ExceptionList OPTIONS FolderBitStream ENCODING 546 CCSID 1208)));
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE PROCEDURE InsertTransactionHeader(IN transactionDate CHARACTER, IN storeid CHARACTER, IN cashierCode CHARACTER, IN cardId CHARACTER, IN resultId INTEGER, IN trasactionCode CHARACTER, IN ticketid CHARACTER, IN amount CHARACTER)
+LANGUAGE DATABASE
+DYNAMIC RESULT SETS 1
+EXTERNAL NAME "InsertTransactionHeader";
+
+CREATE PROCEDURE InsertTransactionDetails(IN transactionId INTEGER, IN productNumber CHARACTER, IN productCount INTEGER, IN productUnitAmout CHARACTER, IN productTotalAmout CHARACTER )
+LANGUAGE DATABASE
+EXTERNAL NAME "InsertTransactionDetails";

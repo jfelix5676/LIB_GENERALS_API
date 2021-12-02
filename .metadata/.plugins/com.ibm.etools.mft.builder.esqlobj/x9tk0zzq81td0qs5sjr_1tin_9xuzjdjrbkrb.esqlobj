@@ -1,0 +1,4 @@
+CREATE FUNCTION SendEmail( IN inReceiver CHARACTER, IN inSender CHARACTER, IN inSubject CHARACTER, IN inText CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.esb.UtilitiesFactory.SendEmail";

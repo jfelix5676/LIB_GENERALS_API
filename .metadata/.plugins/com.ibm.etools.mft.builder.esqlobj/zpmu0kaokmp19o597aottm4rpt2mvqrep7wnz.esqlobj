@@ -1,0 +1,69 @@
+CREATE COMPUTE MODULE ReturnByMoneyRegister_Response
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, TransactionPoints, PersonalMessage, PromotinalMessage, TotalPoints, TransactionPointsInCash, TotalPointsInCash CHARACTER '';
+		DECLARE transactionDate, storeId, cashierCode, cardId, ticketId, amount, totalAmount, products, transactionCode CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:ResultId, '');
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:Description, '');
+		SET TransactionPoints = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TransactionPoints, '');
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:PersonalMessage, '');
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:PromotinalMessage, '');
+		SET TotalPoints = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TotalPoints, '');
+		SET TransactionPointsInCash = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TransactionPointsInCash, '');
+		SET TotalPointsInCash = COALESCE( InputRoot.XMLNSC.NS:ReturnByMoneyRegisterResponse.NS:ReturnByMoneyRegisterResult.NS:TotalPointsInCash, '');
+		
+		SET transactionDate = COALESCE( InputLocalEnvironment.Destination.Data.transactionDate, '');
+		SET storeId = COALESCE( InputLocalEnvironment.Destination.Data.storeId, '');
+		SET cashierCode = COALESCE( InputLocalEnvironment.Destination.Data.cashierCode, '');
+		SET cardId = COALESCE( InputLocalEnvironment.Destination.Data.cardId, '');
+		SET ticketId = COALESCE( InputLocalEnvironment.Destination.Data.ticketId, '');
+		SET amount = COALESCE( InputLocalEnvironment.Destination.Data.amount, '');
+		SET totalAmount = COALESCE( InputLocalEnvironment.Destination.Data.totalAmount, '');
+		SET products = COALESCE( InputLocalEnvironment.Destination.Data.products, '');		
+		
+		-- VALIDATION		
+		IF COALESCE( InputLocalEnvironment.Destination.Data.referenceId3, '') = 'BON' THEN
+			SET transactionCode = '59';
+		ELSE
+			SET transactionCode = '57';
+		END IF;
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.TransactionPoints = TransactionPoints;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.TotalPoints = TotalPoints;
+		SET OutputRoot.JSON.Data.TransactionPointsInCash = TransactionPointsInCash;
+		SET OutputRoot.JSON.Data.TotalPointsInCash = TotalPointsInCash;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		IF ResultID >= 0 THEN -- VALIDACION LOG EXITOSO
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionDate = transactionDate;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.storeId = storeId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cashierCode = cashierCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.cardId = cardId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ticketId = ticketId;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.totalAmount = totalAmount;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.ResultID = ResultID;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.transactionCode = transactionCode;
+			SET OutputLocalEnvironment.Destination.InsertTransaction.products = products;
+		END IF;
+		 
+		RETURN TRUE; 
+	END; 
+END MODULE;

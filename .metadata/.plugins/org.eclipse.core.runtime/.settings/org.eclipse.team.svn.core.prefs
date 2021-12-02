@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+externalMigrateFromAuthorizationDatabase/isMigrated=true
+migrateFromAuthorizationDatabase/isMigrated=true
+repositories/e01436633a53001c1bffbe947bbabc5a=e01436633a53001c1bffbe947bbabc5a;svn\://10.200.3.59/ESB/LIB_GENERALS_API;svn\://10.200.3.59/ESB/LIB_GENERALS_API;branches;tags;trunk;true;;;;false;;;0

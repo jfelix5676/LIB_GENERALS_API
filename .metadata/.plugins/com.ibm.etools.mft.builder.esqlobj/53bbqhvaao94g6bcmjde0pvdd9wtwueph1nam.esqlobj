@@ -1,0 +1,61 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		-- DECLARATION
+		DECLARE ResultID, Description, CardID, BalancePoints, BalanceAmount, StatusID, StatusDescription, Activate, Expire, CustomerID, CustomerName, PersonalMessage, PromotinalMessage, PointsToExpire, ExpireStatusDescriptionCustomer, ExpireStatusDescriptionSeller, ExpireStatusID, CardTypeID, Email CHARACTER '';
+		
+		SET ResultID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ResultId, ''); 
+		SET Description = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Description, ''); 
+		SET CardID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CardId, ''); 
+		SET BalancePoints = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:BalancePoints, ''); 
+		SET BalanceAmount = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:BalanceAmount, ''); 
+		SET StatusID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:StatusdId, ''); 
+		SET StatusDescription = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:StatusDescription, ''); 
+		SET Activate = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Activate, ''); 
+		SET Expire = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Expire, ''); 
+		SET CustomerID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CustomerId, ''); 
+		SET CustomerName = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CustomerName, ''); 
+		SET PersonalMessage = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PersonalMessage, ''); 
+		SET PromotinalMessage = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PromotinalMessage, ''); 
+		SET PointsToExpire = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:PointsToExpire, ''); 
+		SET ExpireStatusDescriptionCustomer = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusDescriptionCustomer, ''); 
+		SET ExpireStatusDescriptionSeller = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusDescriptionSeller, ''); 
+		SET ExpireStatusID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:ExpireStatusID, ''); 
+		SET CardTypeID = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:CardTypeID, ''); 
+		SET Email = COALESCE( InputRoot.XMLNSC.NS:GetBalanceResponse.NS:GetBalanceResult.NS:Email, ''); 
+		
+		-- HEADER 
+		CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+		SET OutputRoot.HTTPReplyHeader."Content-Type" = 'application/json; charset=utf-8'; 
+		 
+		-- BODY 
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON'; 
+		SET OutputRoot.JSON.Data.ResultID = ResultID;
+		SET OutputRoot.JSON.Data.Description = Description;
+		SET OutputRoot.JSON.Data.CardID = CardID;
+		SET OutputRoot.JSON.Data.BalancePoints = BalancePoints;
+		SET OutputRoot.JSON.Data.BalanceAmount = BalanceAmount;
+		SET OutputRoot.JSON.Data.StatusID = StatusID;
+		SET OutputRoot.JSON.Data.StatusDescription = StatusDescription;
+		SET OutputRoot.JSON.Data.Activate = Activate;
+		SET OutputRoot.JSON.Data.Expire = Expire;
+		SET OutputRoot.JSON.Data.CustomerID = CustomerID;
+		SET OutputRoot.JSON.Data.CustomerName = CustomerName;
+		SET OutputRoot.JSON.Data.PersonalMessage = PersonalMessage;
+		SET OutputRoot.JSON.Data.PromotinalMessage = PromotinalMessage;
+		SET OutputRoot.JSON.Data.PointsToExpire = PointsToExpire;
+		SET OutputRoot.JSON.Data.ExpireStatusDescriptionCustomer = ExpireStatusDescriptionCustomer;
+		SET OutputRoot.JSON.Data.ExpireStatusDescriptionSeller = ExpireStatusDescriptionSeller;
+		SET OutputRoot.JSON.Data.ExpireStatusID = ExpireStatusID;
+		SET OutputRoot.JSON.Data.CardTypeID = CardTypeID;
+		SET OutputRoot.JSON.Data.Email = Email;
+		SET OutputRoot.JSON.Data.RequestData = COALESCE(InputLocalEnvironment.Destination.RequestData, '');
+		SET OutputRoot.JSON.Data.ResponseData = CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+		
+		-- ENVIRONMENT 	
+		SET Environment.Variables.Log.BackEndTransaction = Environment.Variables.Log.BackEndTransaction || ' Response: ' || CAST(ASBITSTREAM(InputRoot.[<] ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546); 
+		 
+		-- LOCAL ENVIRONMENT 
+		SET OutputLocalEnvironment = InputLocalEnvironment; 
+		 
+		RETURN TRUE; 
+	END; 

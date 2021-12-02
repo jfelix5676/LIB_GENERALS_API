@@ -1,0 +1,63 @@
+CREATE COMPUTE MODULE SetProperties
+	
+	DECLARE DataResult ROW;
+	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE isReply BOOLEAN FALSE;
+		
+		IF EXISTS(InputRoot.HTTPInputHeader[]) THEN
+			DECLARE Method, Operation, Request CHARACTER '';
+											
+			CALL readParameters(DataResult, InputRoot, InputLocalEnvironment);
+										
+			SET Method = COALESCE( DataResult.REST.Input.Method, '');
+			SET Operation = COALESCE( DataResult.REST.Input.Operation, '');
+			
+			SET isReply = IsResponse(COALESCE(readApplicationLabel(), ''), COALESCE(DataResult.REST.Input.Path, ''));
+			
+			IF isReply = TRUE THEN
+				-- DECLARE
+				DECLARE AUTOMATIC_REPLY BLOB TransactionalResponse(COALESCE(readApplicationLabel(), ''), COALESCE(DataResult.REST.Input.Path, ''));
+				
+				-- HEADER
+				CREATE NEXTSIBLING OF OutputRoot.Properties TYPE Name NAME 'HTTPReplyHeader'; 
+				CREATE LASTCHILD OF OutputRoot.HTTPReplyHeader TYPE NameValue NAME 'Content-Type' VALUE 'application/json; charset=utf-8';
+					
+				-- BODY
+				CREATE LASTCHILD OF OutputRoot DOMAIN('JSON') PARSE(AUTOMATIC_REPLY);
+			ELSE
+				IF Method <> 'GET' THEN
+					SET OutputRoot = InputRoot;
+					SET Request = CAST(ASBITSTREAM(InputBody ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546);
+				END IF;				
+			END IF;			
+			
+			-- LOCAL ENVIRONMENT		
+			CREATE LASTCHILD OF OutputLocalEnvironment TYPE Name NAME 'Destination';
+			SET OutputLocalEnvironment.Destination.RouterList.DestinationData[1].labelName = Operation;
+			
+			-- ENVIRONMENT
+			CREATE LASTCHILD OF Environment TYPE Name NAME 'REST';
+			SET Environment.REST.Input = DataResult.REST.Input;
+				
+			CREATE LASTCHILD OF Environment TYPE Name NAME 'Variables';
+			SET Environment.Variables.Log.Host = COALESCE(DataResult.REST.Input.Host, '');
+			SET Environment.Variables.Log.Application = COALESCE(DataResult.REST.Input.Application, '');
+			SET Environment.Variables.Log.Method = COALESCE(Operation, '');
+			SET Environment.Variables.Log.StartDate = COALESCE(CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd HH:mm:ss.SSS'), '');
+			SET Environment.Variables.Log.Request = COALESCE(Request, '');		
+		END IF;
+		
+		-- AUTOMATIC REPLY
+		IF isReply = TRUE THEN
+			-- TERMINAL
+			PROPAGATE TO TERMINAL 1;
+		ELSE
+			-- TERMINAL
+			PROPAGATE TO TERMINAL 0;
+		END IF;	
+		
+		RETURN FALSE;
+	END;
+END MODULE;

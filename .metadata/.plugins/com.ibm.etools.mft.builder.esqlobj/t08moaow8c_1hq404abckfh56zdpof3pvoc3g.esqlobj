@@ -1,0 +1,4 @@
+CREATE PROCEDURE InsertTransactionHeader(IN transactionDate CHARACTER, IN storeid CHARACTER, IN cashierCode CHARACTER, IN cardId CHARACTER, IN resultId INTEGER, IN trasactionCode CHARACTER, IN ticketid CHARACTER, IN amount CHARACTER)
+LANGUAGE DATABASE
+DYNAMIC RESULT SETS 1
+EXTERNAL NAME "InsertTransactionHeader";

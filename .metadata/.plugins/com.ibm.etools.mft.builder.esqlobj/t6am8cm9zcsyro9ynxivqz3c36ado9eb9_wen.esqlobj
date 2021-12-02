@@ -1,0 +1,4 @@
+CREATE FUNCTION decrypted( IN inValue CHARACTER )
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.esb.UtilitiesFactory.decrypted";

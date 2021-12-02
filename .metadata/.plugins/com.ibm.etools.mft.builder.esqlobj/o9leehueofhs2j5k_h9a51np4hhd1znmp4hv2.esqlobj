@@ -1,0 +1,4 @@
+CREATE PROCEDURE isNumeric ( IN string CHAR ) RETURNS BOOLEAN
+BEGIN      
+	RETURN containsCharsOnly( string, '0123456789' );      
+END;

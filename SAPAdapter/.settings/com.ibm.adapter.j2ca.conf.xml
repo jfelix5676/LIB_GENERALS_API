@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><configuration xmlns="http://j2ca.adapter.ibm.com">
+
+
+
+
+<systemEntry uri="C:\Conectores Broker\sapjco3.dll"/>
+<systemEntry uri="C:\Conectores Broker\sapjco3.jar"/>
+<systemEntry uri="C:\Conectores Broker\sapidoc3.jar"/>
+<systemEntry uri="C:\Conectores Broker\msvcr71.dll"/>
+<systemEntry uri="C:\Conectores Broker\msvcr71.dll"/>
+</configuration>

@@ -1,0 +1,38 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		DECLARE ErrorMessage CHARACTER COALESCE('No respondio en el tiempo establecido el Servicio Externo (180 seg) O Esta respondiendo de formal anormal. Favor de contactar con el proveedor.', '');
+		
+		DECLARE ErrorNumber INTEGER 0;
+	    DECLARE ErrorText, ErrorDetail CHARACTER '';
+		
+		IF EXISTS(InputExceptionList.*[]) THEN
+			CREATE LASTCHILD OF Environment.XMLNSC DOMAIN('XMLNSC') TYPE Name Name 'ExceptionList'; 
+	    	SET Environment.XMLNSC.ExceptionList = InputExceptionList;
+	    	
+	    	DECLARE Label CHARACTER;
+	        DECLARE I INTEGER 1;
+			DECLARE start REFERENCE TO InputExceptionList.*[1];
+			
+			WHILE start.Number IS NOT NULL DO
+				SET ErrorNumber = start.Number;
+				
+				IF ErrorNumber BETWEEN 2000 AND 3999 THEN
+		        	SET ErrorDetail = start.Insert[CARDINALITY(start.Insert[])].Text;
+		        ELSE
+		            SET ErrorDetail = start.Text;
+		        END IF;
+		        
+		        MOVE start LASTCHILD;
+			END WHILE;
+			
+			SET ErrorMessage = ErrorDetail;			
+		ELSEIF EXISTS(InputRoot.BLOB.*[]) THEN
+			SET ErrorMessage = CAST(InputRoot.BLOB.BLOB AS CHARACTER CCSID 1208 ENCODING 546);
+		ELSEIF EXISTS(InputRoot.SOAP.*[]) THEN
+			SET ErrorMessage = InputRoot.SOAP.Body.NS1:Fault.faultstring;
+		END IF;
+		
+		THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (ErrorMessage);
+		
+		RETURN TRUE;
+	END;

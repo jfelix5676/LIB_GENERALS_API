@@ -1,0 +1,4 @@
+CREATE FUNCTION readApplicationLabel ( ) RETURNS CHARACTER
+BEGIN
+	RETURN ApplicationLabel;
+END;

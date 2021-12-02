@@ -1,0 +1,18 @@
+CREATE FUNCTION readConfigurationManagement (IN InValue CHARACTER) RETURNS CHARACTER
+BEGIN
+	DECLARE RESULT CHARACTER '';
+	
+	IF checkCache('XT01', 'ConfigurationManagement') = TRUE THEN
+		DECLARE DataResult ROW;		
+			
+		CREATE LASTCHILD OF DataResult DOMAIN('XMLNSC') PARSE( CAST(readCache('XT01', 'ConfigurationManagement') AS BLOB CCSID 1208 ENCODING 546 ) );
+		
+		IF CARDINALITY( SELECT T.* FROM DataResult.XMLNSC.ConfigurationManagement.Item[] AS T WHERE TRIM(T.Nombre) = InValue) = 1 THEN
+			SET RESULT = THE (SELECT ITEM T.Valor FROM DataResult.XMLNSC.ConfigurationManagement.Item[] AS T WHERE TRIM(T.Nombre) = InValue);
+		END IF;
+	ELSE	
+		THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Cache ''ConfigurationManagement''.', ''));
+	END IF;
+	
+	RETURN TRIM(RESULT);
+END;

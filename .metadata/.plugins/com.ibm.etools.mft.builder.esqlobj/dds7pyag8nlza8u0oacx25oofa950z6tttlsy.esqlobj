@@ -1,0 +1,20 @@
+CREATE FUNCTION Split (IN S CHARACTER, IN DataSet REFERENCE, IN Delim CHARACTER) 
+BEGIN 
+   	DECLARE P INTEGER; 
+   	DECLARE Idx INTEGER 1; 
+	
+   	SET DataSet = NULL; 
+
+   	REPEAT 
+      	SET P = POSITION(Delim IN S); 
+      	IF P = 0 THEN 
+         	SET DataSet.Array[Idx] = S; 
+      	ELSE 
+         	SET DataSet.Array[Idx] = LEFT(S, P - 1); 
+         	SET S = SUBSTRING(S FROM P + LENGTH(Delim)); 
+         	SET Idx = Idx + 1; 
+      	END IF; 
+      	
+  		UNTIL P = 0    
+  	END REPEAT;    
+END;

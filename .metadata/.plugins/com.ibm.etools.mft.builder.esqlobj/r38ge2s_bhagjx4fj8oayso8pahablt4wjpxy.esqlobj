@@ -1,0 +1,4 @@
+CREATE PROCEDURE isAlphanumeric ( IN string CHAR ) RETURNS BOOLEAN
+BEGIN      
+	RETURN containsCharsOnly( string,  'abcdefghijklmnopqrstuvwxyz' || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' );
+END;

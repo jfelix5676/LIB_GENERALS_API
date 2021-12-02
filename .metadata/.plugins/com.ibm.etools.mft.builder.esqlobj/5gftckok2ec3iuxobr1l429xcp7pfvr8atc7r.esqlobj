@@ -1,0 +1,61 @@
+CREATE FUNCTION readParameters (IN DataResult REFERENCE, IN InRoot REFERENCE, IN InLocal REFERENCE )
+BEGIN
+	DECLARE Identifier, Application, Method, Operation, Path, URI, Host CHARACTER '';
+			
+	DECLARE HTTP, Segment ROW;
+	DECLARE XOriginalHTTPCommand, HostName, XScheme CHARACTER '';
+				
+	SET XScheme = InRoot.HTTPInputHeader."X-Scheme";
+	SET HostName = XScheme || '://' || InRoot.HTTPInputHeader.Host;
+	SET XOriginalHTTPCommand = TRIM(REPLACE(InRoot.HTTPInputHeader."X-Original-HTTP-Command", HostName, ''));
+	SET XOriginalHTTPCommand = TRIM(REPLACE(XOriginalHTTPCommand, 'HTTP/1.1', ''));
+			
+	CALL Split(XOriginalHTTPCommand, HTTP, ' ');		
+	CALL Split(HTTP.Array[2], Segment, '/');
+	
+	SET Identifier = UUIDASCHAR;
+	SET Application = readApplicationLabel();
+	SET Method = HTTP.Array[1];
+	SET Operation = Segment.Array[ CARDINALITY(Segment.Array[]) ];
+	SET Path = HTTP.Array[2];
+	SET URI = HostName || HTTP.Array[2];
+	SET Host = InRoot.HTTPInputHeader."X-Remote-Host";
+	
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Identifier' VALUE Identifier;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Application' VALUE Application;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Method' VALUE Method;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Operation' VALUE Operation;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Path' VALUE Path;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'URI' VALUE URI;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE NameValue NAME 'Host' VALUE Host;
+	CREATE LASTCHILD OF DataResult.REST.Input TYPE Name NAME 'Parameters';
+	
+	DECLARE REF_ARRAY1 REFERENCE TO InRoot.HTTPInputHeader.[1];			
+	WHILE LASTMOVE(REF_ARRAY1) = TRUE DO
+		IF FIELDNAME(REF_ARRAY1) <> 'X-Server-Name' 
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Server-Port' 
+		AND FIELDNAME(REF_ARRAY1) <> 'Host'
+		AND FIELDNAME(REF_ARRAY1) <> 'Accept-Encoding'
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Original-HTTP-Command'
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Remote-Addr'
+		AND FIELDNAME(REF_ARRAY1) <> 'User-Agent'
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Query-String'
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Scheme'
+		AND FIELDNAME(REF_ARRAY1) <> 'Content-Length'
+		AND FIELDNAME(REF_ARRAY1) <> 'Content-Type'
+		AND FIELDNAME(REF_ARRAY1) <> 'X-Remote-Host'
+		AND FIELDNAME(REF_ARRAY1) <> 'Connection' THEN
+					
+			CREATE LASTCHILD OF DataResult.REST.Input.Parameters TYPE NameValue NAME LOWER(FIELDNAME(REF_ARRAY1)) VALUE FIELDVALUE(REF_ARRAY1);
+		END IF;
+				
+		MOVE REF_ARRAY1 NEXTSIBLING;
+	END WHILE;
+				
+	DECLARE REF_ARRAY2 REFERENCE TO InLocal.HTTP.Input.QueryString.[1];			
+	WHILE LASTMOVE(REF_ARRAY2) = TRUE DO
+		CREATE LASTCHILD OF DataResult.REST.Input.Parameters TYPE NameValue NAME LOWER(FIELDNAME(REF_ARRAY2)) VALUE FIELDVALUE(REF_ARRAY2);
+					
+		MOVE REF_ARRAY2 NEXTSIBLING;
+	END WHILE;
+END;

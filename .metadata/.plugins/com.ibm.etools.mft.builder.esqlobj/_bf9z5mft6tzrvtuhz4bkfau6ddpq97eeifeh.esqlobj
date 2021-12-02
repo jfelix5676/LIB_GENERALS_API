@@ -1,0 +1,49 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN		
+		IF checkCache('XT01', 'TransactionalManagement') = TRUE THEN
+			DECLARE Application, Path, EndDate CHARACTER '';
+			
+			SET Application = COALESCE(readApplicationLabel(), '');
+			SET Path = COALESCE(Environment.REST.Input.Path, '');
+			SET EndDate = COALESCE(CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd HH:mm:ss.SSS'), '');
+				
+			CREATE LASTCHILD OF DataResult DOMAIN('XMLNSC') PARSE( CAST(readCache('XT01', 'TransactionalManagement') AS BLOB CCSID 1208 ENCODING 546 ) );
+			
+			SET DataResult.TransactionalManagement[] = SELECT * FROM DataResult.XMLNSC.TransactionalManagement.Item[] AS T WHERE T.Application = Application AND (T.Path = Path OR CONTAINS(T.Path, '/*') = TRUE);
+			
+			IF CARDINALITY( DataResult.TransactionalManagement[] ) > 0 THEN				
+				
+				DECLARE Estatus CHARACTER '0';
+			
+				IF EXISTS(InputRoot.JSON.Data.ErrorMessage[]) = FALSE THEN
+					SET Estatus = '1';
+				END IF;
+				
+				-- HEADER
+				CREATE NEXTSIBLING OF OutputRoot.Properties DOMAIN ('MQMD') TYPE Name NAME 'MQMD';
+				SET OutputRoot.MQMD.CodedCharSetId = 1208;
+				SET OutputRoot.MQMD.Encoding = 546;
+				
+				-- BODY
+				CREATE LASTCHILD OF OutputRoot DOMAIN ('JSON') TYPE Name NAME 'JSON';
+				SET OutputRoot.JSON.Data.Host = COALESCE(FIELDVALUE(Environment.Variables.Log.Host), Environment.REST.Input.Host);
+				SET OutputRoot.JSON.Data.Application = COALESCE(FIELDVALUE(Environment.Variables.Log.Application), readApplicationLabel());
+				SET OutputRoot.JSON.Data.Method = COALESCE(FIELDVALUE(Environment.Variables.Log.Method), readApplicationLabel());
+				SET OutputRoot.JSON.Data.Type = COALESCE(FIELDVALUE(Environment.Variables.Log.Type), '');
+				SET OutputRoot.JSON.Data.BackEnd = COALESCE(FIELDVALUE(Environment.Variables.Log.BackEnd), '');
+				SET OutputRoot.JSON.Data.StartDate = COALESCE(FIELDVALUE(Environment.Variables.Log.StartDate), CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd HH:mm:ss.SSS'));
+				SET OutputRoot.JSON.Data.EndDate = COALESCE(EndDate, '');
+				SET OutputRoot.JSON.Data.Request = COALESCE(Environment.Variables.Log.Request, '');
+				SET OutputRoot.JSON.Data.Response = COALESCE(CAST(ASBITSTREAM(InputBody ENCODING 546 CCSID 1208 ) AS CHARACTER CCSID 1208 ENCODING 546), '');
+				SET OutputRoot.JSON.Data.BackEndTransaction = COALESCE(BASE64ENCODE(Environment.Variables.Log.BackEndTransaction), '');
+				SET OutputRoot.JSON.Data.Status = Estatus;
+				SET OutputRoot.JSON.Data.ODBC = COALESCE(DataResult.TransactionalManagement.ODBC, 'broker');
+					
+				PROPAGATE TO TERMINAL 0 MESSAGE OutputRoot;
+			END IF;
+		ELSE 
+			THROW USER EXCEPTION CATALOG 'BIPmsgs' MESSAGE 2951 VALUES (COALESCE('Se encontraron problemas con la Cache ''TransactionalManagement''.', ''));
+		END IF;
+		
+		RETURN FALSE;
+	END;

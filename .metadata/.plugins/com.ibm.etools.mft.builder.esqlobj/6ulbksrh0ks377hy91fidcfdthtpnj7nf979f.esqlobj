@@ -1,0 +1,54 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/ 
+	BEGIN 
+		DECLARE transactionDate, storeId, cashierCode, cardId, resultId, transactionCode, ticketId, totalAmount, products CHARACTER '';
+		DECLARE transactionID INTEGER 0;
+		
+		SET transactionDate = COALESCE( InputRoot.JSON.Data.transactionDate, '');
+		SET storeId = COALESCE( InputRoot.JSON.Data.storeId, '');
+		SET cashierCode = COALESCE( InputRoot.JSON.Data.cashierCode, '');
+		SET cardId = COALESCE( InputRoot.JSON.Data.cardId, '');		
+		SET ticketId = COALESCE( InputRoot.JSON.Data.ticketId, '');
+		SET totalAmount = COALESCE( InputRoot.JSON.Data.totalAmount, '');
+		SET resultId = COALESCE( InputRoot.JSON.Data.ResultID, '');
+		SET transactionCode = COALESCE( InputRoot.JSON.Data.transactionCode, '');
+		SET products = COALESCE( InputRoot.JSON.Data.products, '');
+		
+		CALL InsertTransactionHeader(transactionDate, storeId, cashierCode, cardId, CAST(resultId AS INTEGER), transactionCode, ticketId, CAST(totalAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), DataResult.Item[]) IN Database.{'Blue'}.{'dbo'};
+					
+		SET transactionID = COALESCE( DataResult.Item.Identity, '');
+			
+		IF CONTAINS(products, '-') THEN
+			CALL Split(products, DataResult, '-');
+		END IF;
+		
+		IF CARDINALITY(DataResult.Item[]) = 1 THEN
+			DECLARE DataSet ROW;	
+			CALL Split(products, DataSet, ',');
+						
+			DECLARE productNumber, productCount, productUnitAmount, productTotalAmount CHARACTER '';
+			SET productNumber = COALESCE(DataSet.Array[1], '');
+			SET productCount = COALESCE(DataSet.Array[3], '');
+			SET productUnitAmount = COALESCE(DataSet.Array[2], '');
+			SET productTotalAmount = COALESCE(DataSet.Array[4], '');
+						
+			CALL InsertTransactionDetails(CAST(transactionID AS INTEGER), productNumber, CAST(productCount AS INTEGER), CAST(productUnitAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), CAST(productTotalAmount AS CHARACTER FORMAT '##0.00;(##0.00)')) IN Database.{'Blue'}.{'dbo'};	
+		ELSE
+			DECLARE ProductsDS REFERENCE TO DataResult.Array[1];
+			WHILE LASTMOVE(ProductsDS) = TRUE DO
+				DECLARE DataSet ROW;		
+				CALL Split(ProductsDS, DataSet, ',');
+						
+				DECLARE productNumber, productCount, productUnitAmount, productTotalAmount CHARACTER '';
+				SET productNumber = COALESCE(DataSet.Array[1], '');
+				SET productCount = COALESCE(DataSet.Array[3], '');
+				SET productUnitAmount = COALESCE(DataSet.Array[2], '');
+				SET productTotalAmount = COALESCE(DataSet.Array[4], '');
+						
+				CALL InsertTransactionDetails(CAST(transactionID AS INTEGER), productNumber, CAST(productCount AS INTEGER), CAST(productUnitAmount AS CHARACTER FORMAT '##0.00;(##0.00)'), CAST(productTotalAmount AS CHARACTER FORMAT '##0.00;(##0.00)')) IN Database.{'Blue'}.{'dbo'};
+					
+				MOVE ProductsDS NEXTSIBLING NAME 'Array';
+			END WHILE;
+		END IF;
+		
+		RETURN FALSE; 
+	END; 

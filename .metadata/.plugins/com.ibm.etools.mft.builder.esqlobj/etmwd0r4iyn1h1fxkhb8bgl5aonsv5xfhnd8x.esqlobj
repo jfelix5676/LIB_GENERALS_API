@@ -1,0 +1,4 @@
+CREATE FUNCTION replaceSpecialCharacters( IN inValue CHARACTER )
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.esb.UtilitiesFactory.replaceSpecialCharacters";

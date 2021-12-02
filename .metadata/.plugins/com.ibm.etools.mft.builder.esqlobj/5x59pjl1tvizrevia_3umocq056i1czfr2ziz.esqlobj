@@ -1,0 +1,4 @@
+CREATE FUNCTION readLibraryLabel ( ) RETURNS CHARACTER
+BEGIN
+	RETURN LibraryLabel;
+END;

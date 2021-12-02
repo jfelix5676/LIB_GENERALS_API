@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<IntegrationNodeConnectionParameters Version="10.0.0" host="10.200.3.102" integrationNodeName="IB10NODE" listenerPort="4414" userName="jesus.felix" xmlns="http://www.ibm.com/xmlns/prod/websphere/iib/8/IntegrationNodeConnectionParameters"/>

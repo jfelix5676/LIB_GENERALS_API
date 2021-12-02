@@ -1,0 +1,4 @@
+CREATE FUNCTION deteleCache( IN cacheName CHARACTER, IN key CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.esb.UtilitiesFactory.deteleCache";

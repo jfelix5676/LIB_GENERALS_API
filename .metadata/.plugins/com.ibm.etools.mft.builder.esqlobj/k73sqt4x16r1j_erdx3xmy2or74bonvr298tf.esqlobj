@@ -1,0 +1,12 @@
+CREATE FUNCTION padding(IN string CHAR, IN length1 INT ) RETURNS CHARACTER
+BEGIN
+	DECLARE padding CHARACTER;
+	
+    IF LENGTH( string ) <= length1 THEN
+    	SET padding = LEFT( string || SPACE( 1000 ), length1 );
+    ELSE
+    	SET padding = string;
+    END IF;
+     
+    RETURN padding;
+END;

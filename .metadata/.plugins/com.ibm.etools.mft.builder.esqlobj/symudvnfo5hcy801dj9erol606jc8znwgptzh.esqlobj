@@ -1,0 +1,4 @@
+CREATE FUNCTION readQueueManagerName ( ) RETURNS CHARACTER
+BEGIN
+	RETURN QueueManagerName;
+END;

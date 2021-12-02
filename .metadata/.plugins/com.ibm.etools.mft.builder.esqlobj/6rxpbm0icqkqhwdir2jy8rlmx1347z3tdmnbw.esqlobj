@@ -1,0 +1,3 @@
+CREATE PROCEDURE InsertTransactionDetails(IN transactionId INTEGER, IN productNumber CHARACTER, IN productCount INTEGER, IN productUnitAmout CHARACTER, IN productTotalAmout CHARACTER )
+LANGUAGE DATABASE
+EXTERNAL NAME "InsertTransactionDetails";

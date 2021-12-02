@@ -1,0 +1,4 @@
+CREATE FUNCTION readBrokerName ( ) RETURNS CHARACTER
+BEGIN
+	RETURN BrokerName;
+END;
